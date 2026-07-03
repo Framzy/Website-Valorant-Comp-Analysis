@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import ast
 from training_v2.config import (
-    TEAM_DATASET_PATH, FEATURE_COLUMNS, TARGET_COLUMN  
+    TEAM_DATASET_PATH, FEATURE_COLUMNS, TARGET_COLUMN, AGENT_ROLE_MAP  
 )
 from sklearn.preprocessing import OneHotEncoder, MultiLabelBinarizer
 
@@ -131,6 +131,130 @@ def build_encoders(
 
     }    
     
+def build_role_features(
+    X: pd.DataFrame,
+):
+    """
+    Build role count features.
+    """
+
+    print("\n" + "=" * 60)
+    print("BUILD ROLE FEATURES")
+    print("=" * 60)
+
+    role_features = []
+
+    for composition in X["Agent"]:
+
+        role_count = {
+
+            "controller": 0,
+
+            "duelist": 0,
+
+            "initiator": 0,
+
+            "sentinel": 0,
+
+        }
+
+        for agent in composition:
+
+            role = AGENT_ROLE_MAP[agent]
+
+            role_count[role] += 1
+
+        role_features.append([
+
+            role_count["controller"],
+
+            role_count["duelist"],
+
+            role_count["initiator"],
+
+            role_count["sentinel"],
+
+        ])
+
+    role_features = np.array(role_features)
+
+    print(f"[INFO] Shape : {role_features.shape}")
+
+    print()
+
+    print("=" * 60)
+    print("ROLE FEATURE SAMPLE")
+    print("=" * 60)
+
+    print(role_features[:5])
+
+    return role_features
+
+def build_role_pattern_features(
+    role_feature: np.ndarray,
+) -> np.ndarray:
+    """
+    Build role pattern features.
+
+    Parameters
+    ----------
+    role_feature
+
+        Role count feature with shape
+        (n_samples, 4)
+
+        Column order:
+
+        controller,
+        duelist,
+        initiator,
+        sentinel
+    """
+
+    print("\n" + "=" * 60)
+    print("BUILD ROLE PATTERN FEATURES")
+    print("=" * 60)
+
+    pattern_features = []
+
+    for controller, duelist, initiator, sentinel in role_feature:
+
+        pattern_features.append([
+
+            # Presence
+
+            int(controller > 0),
+
+            int(duelist > 0),
+
+            int(initiator > 0),
+
+            int(sentinel > 0),
+
+            # Meta pattern
+
+            int(controller >= 2),
+
+            int(initiator >= 2),
+
+            int(duelist >= 2),
+
+        ])
+
+    pattern_features = np.array(pattern_features)
+
+    print(f"[INFO] Shape : {pattern_features.shape}")
+
+    print()
+
+    print("=" * 60)
+    print("ROLE PATTERN SAMPLE")
+    print("=" * 60)
+
+    print(pattern_features[:5])
+
+    return pattern_features
+    
 def encode_features(
     X: pd.DataFrame,
     encoders: dict,
@@ -159,13 +283,41 @@ def encode_features(
     agent_feature = encoders["agent"].transform(
         X["Agent"]
     )
+    
+    numeric_feature = X[
+    [
+        "Team Overall WR",
+        "Team Map WR",
+        "Agent WR Mean",
+        "Agent WR Min",
+        "Agent WR Max",
+        "Agent Played Mean",
+    ]
+].to_numpy(dtype=float)
+    
+    role_feature = build_role_features(X)
 
+    role_pattern_feature = build_role_pattern_features(
+        role_feature
+    )
+    
+    print(team_feature.shape)
+    print(map_feature.shape)
+    print(year_feature.shape)
+    print(agent_feature.shape)
+    print(role_feature.shape)
+    print(role_pattern_feature.shape)
+    print(numeric_feature.shape)
+    
     X_encoded = np.concatenate(
         [
             team_feature,
             map_feature,
             year_feature,
             agent_feature,
+            role_feature,
+            role_pattern_feature,
+            numeric_feature,
         ],
         axis=1,
     )
@@ -246,6 +398,63 @@ def build_feature_names(
         ]
 
     )
+    
+    # -------------------------
+    # Role
+    # -------------------------
+
+    feature_names.extend([
+        
+        "role_controller",
+
+        "role_duelist",
+
+        "role_initiator",
+
+        "role_sentinel",
+    ])
+
+    # -------------------------
+    # Role Pattern
+    # -------------------------
+
+    feature_names.extend([
+
+        "has_controller",
+
+        "has_duelist",
+
+        "has_initiator",
+
+        "has_sentinel",
+
+        "double_controller",
+
+        "double_initiator",
+
+        "double_duelist",
+
+    ])
+    
+    # -------------------------
+    # Numeric
+    # -------------------------
+    
+    feature_names.extend([
+
+        "team_overall_wr",
+
+        "team_map_wr",
+
+        "agent_wr_mean",
+
+        "agent_wr_min",
+
+        "agent_wr_max",
+
+        "agent_played_mean",
+
+    ])
 
     print(f"[INFO] Total Feature : {len(feature_names)}")
 
@@ -277,6 +486,7 @@ def validate_feature_names(
 
     print("[INFO] Validation Passed")
     
+
 def build_feature_pipeline(
     df: pd.DataFrame,
 ) -> dict:
@@ -400,6 +610,8 @@ def main():
     print(f"y Shape : {pipeline['y'].shape}")
 
     print(f"Feature : {len(pipeline['feature_names'])}")
+    
+    print(f"Samples : {len(pipeline['y'])}")
 
 if __name__ == "__main__":
     main()

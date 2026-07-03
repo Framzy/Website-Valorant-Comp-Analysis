@@ -44,13 +44,30 @@ TRAIN_TEST_SPLIT = 0.20
 CV_FOLDS = 5
 
 FEATURE_COLUMNS = [
+
     "Team",
+
     "Map",
+
     "Year",
+
     "Agent",
+
+    "Team Overall WR",
+
+    "Team Map WR",
+
+    "Agent WR Mean",
+
+    "Agent WR Min",
+
+    "Agent WR Max",
+
+    "Agent Played Mean",
+
 ]
 
-TARGET_COLUMN = "Winrate"
+TARGET_COLUMN = "Composition Score"
 
 # ==========================================================
 # XGBOOST
@@ -127,3 +144,10 @@ AGENT_ROLE_MAP = {
     "vyse": "sentinel"
 
 }
+
+# ==========================================================
+# Training Dataset Filter
+# ==========================================================
+
+MIN_TOURNAMENT = 40
+MIN_YEAR = 2

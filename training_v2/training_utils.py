@@ -36,7 +36,11 @@ from training_v2.config import (
     ROLE_ORDER,
     TRAIN_TEST_SPLIT,
     XGB_PARAMS,
+    MIN_TOURNAMENT,
+    MIN_YEAR,
 )
+
+from training_v2.constants import TEAM_NAME_MAPPING
 
 # ==========================================================
 # RANDOM SEED
@@ -229,6 +233,100 @@ def validate_dataset(
 
     log_info("Dataset validation passed.")
 
+# ==========================================================
+# TEAM NAME NORMALIZATION
+# ==========================================================
+
+def normalize_team_name(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Normalize inconsistent
+    team names.
+    """
+
+    df = df.copy()
+
+    before = df["Team"].nunique()
+
+    df["Team"] = (
+        df["Team"]
+        .replace(TEAM_NAME_MAPPING)
+    )
+
+    after = df["Team"].nunique()
+
+    print()
+
+    print("=" * 60)
+    print("NORMALIZE TEAM NAME")
+    print("=" * 60)
+
+    print(f"[INFO] Before : {before}")
+
+    print(f"[INFO] After  : {after}")
+
+    return df
+
+# ==========================================================
+# FILTERING TEAM
+# ==========================================================
+
+def filter_training_dataset(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Filter teams with sufficient
+    historical data for training.
+    """
+
+    print("\n" + "=" * 60)
+    print("FILTER TRAINING DATASET")
+    print("=" * 60)
+
+    summary = (
+
+        df
+
+        .groupby("Team")
+
+        .agg(
+
+            Tournament=("Tournament", "count"),
+
+            Years=("Year", "nunique"),
+
+        )
+
+    )
+
+    valid_team = summary[
+
+        (summary["Tournament"] >= MIN_TOURNAMENT)
+
+        &
+
+        (summary["Years"] >= MIN_YEAR)
+
+    ].index
+
+    filtered = df[
+
+        df["Team"].isin(valid_team)
+
+    ].copy()
+
+    print(f"[INFO] Team Before : {df['Team'].nunique()}")
+
+    print(f"[INFO] Team After  : {filtered['Team'].nunique()}")
+
+    print()
+
+    print(f"[INFO] Row Before  : {len(df)}")
+
+    print(f"[INFO] Row After   : {len(filtered)}")
+
+    return filtered
 
 # ==========================================================
 # TARGET
