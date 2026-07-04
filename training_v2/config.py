@@ -25,6 +25,7 @@ TEAM_DATASET_PATH = (
     / "valorant_dataset_team_v2.csv"
 )
 
+MODEL_TEAM_DIR = BASE_DIR / "models/team_prediction_v2"
 MODEL_DIR = BASE_DIR / "models"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -53,21 +54,25 @@ FEATURE_COLUMNS = [
 
     "Agent",
 
+    "Role Pattern",
+
+    "Duelist Count",
+
+    "Initiator Count",
+
+    "Controller Count",
+
+    "Sentinel Count",
+
     "Team Overall WR",
 
     "Team Map WR",
 
-    "Agent WR Mean",
-
-    "Agent WR Min",
-
-    "Agent WR Max",
-
-    "Agent Played Mean",
+    "Composition Strength",
 
 ]
 
-TARGET_COLUMN = "Composition Score"
+TARGET_COLUMN = "Winrate"
 
 # ==========================================================
 # XGBOOST

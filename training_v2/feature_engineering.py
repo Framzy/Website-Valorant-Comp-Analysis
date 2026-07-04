@@ -285,15 +285,12 @@ def encode_features(
     )
     
     numeric_feature = X[
-    [
-        "Team Overall WR",
-        "Team Map WR",
-        "Agent WR Mean",
-        "Agent WR Min",
-        "Agent WR Max",
-        "Agent Played Mean",
-    ]
-].to_numpy(dtype=float)
+        [
+            "Team Overall WR",
+            "Team Map WR",
+            "Composition Strength",
+        ]
+    ].to_numpy(dtype=float)
     
     role_feature = build_role_features(X)
 
@@ -301,13 +298,10 @@ def encode_features(
         role_feature
     )
     
-    print(team_feature.shape)
-    print(map_feature.shape)
-    print(year_feature.shape)
-    print(agent_feature.shape)
-    print(role_feature.shape)
-    print(role_pattern_feature.shape)
-    print(numeric_feature.shape)
+    if np.isnan(numeric_feature).any():
+        raise ValueError(
+            "Numeric feature contains NaN values."
+        )
     
     X_encoded = np.concatenate(
         [
@@ -323,6 +317,38 @@ def encode_features(
     )
 
     print(f"[INFO] Encoded Shape : {X_encoded.shape}")
+    
+    print()
+
+    print("=" * 60)
+    print("FEATURE SUMMARY")
+    print("=" * 60)
+    
+    print(f"Categorical :")
+    
+    print(f"--------------------------")
+    
+    print(f"Team         : {team_feature.shape[1]}")
+
+    print(f"Map          : {map_feature.shape[1]}")
+
+    print(f"Year         : {year_feature.shape[1]}")
+
+    print(f"Agent        : {agent_feature.shape[1]}")
+
+    print(f"Categorical Total  : {team_feature.shape[1] + map_feature.shape[1] + year_feature.shape[1] + agent_feature.shape[1]}")
+    
+    print(f"--------------------------")
+        
+    print(f"Role Count   : {role_feature.shape[1]}")
+
+    print(f"Role Pattern : {role_pattern_feature.shape[1]}")
+
+    print(f"Numeric      : {numeric_feature.shape[1]}")
+    
+    print(f"--------------------------")
+    
+    print(f"Feature Total      : {X_encoded.shape[1]}")
 
     return X_encoded
 
@@ -404,13 +430,9 @@ def build_feature_names(
     # -------------------------
 
     feature_names.extend([
-        
         "role_controller",
-
         "role_duelist",
-
         "role_initiator",
-
         "role_sentinel",
     ])
 
@@ -419,21 +441,13 @@ def build_feature_names(
     # -------------------------
 
     feature_names.extend([
-
         "has_controller",
-
         "has_duelist",
-
         "has_initiator",
-
         "has_sentinel",
-
         "double_controller",
-
         "double_initiator",
-
         "double_duelist",
-
     ])
     
     # -------------------------
@@ -441,19 +455,9 @@ def build_feature_names(
     # -------------------------
     
     feature_names.extend([
-
         "team_overall_wr",
-
         "team_map_wr",
-
-        "agent_wr_mean",
-
-        "agent_wr_min",
-
-        "agent_wr_max",
-
-        "agent_played_mean",
-
+        "composition_strength",
     ])
 
     print(f"[INFO] Total Feature : {len(feature_names)}")
@@ -611,7 +615,13 @@ def main():
 
     print(f"Feature : {len(pipeline['feature_names'])}")
     
-    print(f"Samples : {len(pipeline['y'])}")
+    print()
 
+    print("=" * 60)
+    print("TARGET SUMMARY")
+    print("=" * 60)
+
+    print(pipeline["y"].describe())
+    
 if __name__ == "__main__":
     main()

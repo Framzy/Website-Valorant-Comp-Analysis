@@ -3,13 +3,21 @@ Train Team Model V2
 ===================
 """
 
+import json
+import joblib
+import pandas as pd
+
+from pathlib import Path
+
 from sklearn.model_selection import train_test_split
 
 from xgboost import XGBRegressor
 
-from training_v2.training_utils import (
-    filter_training_dataset,
+from training_v2.config import (
+    MODEL_DIR,
+    MODEL_TEAM_DIR,
 )
+
 
 from training_v2.feature_engineering import (
     load_dataset,
@@ -39,6 +47,7 @@ def split_dataset(
         y,
         test_size=0.2,
         random_state=42,
+        shuffle=True,
     )
 
     print(f"[INFO] Train : {X_train.shape}")
@@ -56,7 +65,7 @@ def split_dataset(
         "y_test": y_test,
 
     }
-    
+       
 def build_model():
     """
     Create XGBoost model.
@@ -175,13 +184,149 @@ def evaluate_model(
         "r2": r2,
 
     }
+    
+def show_feature_importance(
+    model,
+    feature_names,
+):
+    """
+    Show top feature importance.
+    """
 
+    print("\n" + "=" * 60)
+    print("FEATURE IMPORTANCE")
+    print("=" * 60)
+
+    importance = pd.DataFrame({
+
+        "Feature": feature_names,
+
+        "Importance": model.feature_importances_,
+
+    })
+
+    importance = (
+
+        importance
+
+        .sort_values(
+            "Importance",
+            ascending=False,
+        )
+
+        .head(20)
+
+    )
+
+    print(importance.to_string(index=False))
+
+    return importance
+    
+def save_model(
+    model,
+):
+    """
+    Save trained model.
+    """
+
+    print("\n" + "=" * 60)
+    print("SAVE MODEL")
+    print("=" * 60)
+
+    path = MODEL_TEAM_DIR / "team_model_v2.joblib"
+
+    joblib.dump(
+        model,
+        path,
+    )
+
+    print(f"[INFO] Saved : {path}")
+    
+def save_feature_names(
+    feature_names,
+):
+    """
+    Save feature names.
+    """
+
+    path = MODEL_TEAM_DIR / "feature_names.joblib"
+
+    joblib.dump(
+        feature_names,
+        path,
+    )
+
+    print(f"[INFO] Saved : {path}")
+
+def save_metadata(
+    pipeline,
+    train_data,
+    evaluation,
+):
+    """
+    Save model metadata.
+    """
+
+    metadata = {
+
+        "model": "XGBoost",
+
+        "version": "2.0",
+
+        "target": "Composition Strength",
+
+        "feature_count": len(
+            pipeline["feature_names"]
+        ),
+
+        "train_size": len(
+            train_data["X_train"]
+        ),
+
+        "test_size": len(
+            train_data["X_test"]
+        ),
+
+        "mae": round(
+            evaluation["mae"],
+            4,
+        ),
+
+        "rmse": round(
+            evaluation["rmse"],
+            4,
+        ),
+
+        "r2": round(
+            evaluation["r2"],
+            4,
+        ),
+
+    }
+
+    path = MODEL_TEAM_DIR / "metadata.json"
+
+    with open(
+        path,
+        "w",
+        encoding="utf-8",
+    ) as file:
+
+        json.dump(
+
+            metadata,
+
+            file,
+
+            indent=4,
+
+        )
+
+    print(f"[INFO] Saved : {path}")
 
 def main():
 
     df = load_dataset()
-
-    df = filter_training_dataset(df)
 
     pipeline = build_feature_pipeline(df)
 
@@ -224,6 +369,30 @@ def main():
     print()
 
     print(evaluation)
+    
+    importance = show_feature_importance(
+
+        model,
+
+        pipeline["feature_names"],
+
+    )
+
+    save_model(model)
+
+    save_feature_names(
+        pipeline["feature_names"]
+    )
+
+    save_metadata(
+
+        pipeline,
+
+        train_data,
+
+        evaluation,
+
+    )
     
 if __name__ == "__main__":
 

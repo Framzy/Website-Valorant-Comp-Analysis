@@ -13,17 +13,63 @@ from training_v2.config import (
     DATASET_DIR,
     AGENT_ROLE_MAP,
 )
-from training_v2.training_utils import aggregate_matches
 from training_v2.preprocessing.composition_normalizer import (
     analyze_roles,
     calculate_role_distribution,
     allocate_role_slots,
     select_agents,
 )
-from training_v2.training_utils import normalize_team_name
+from training_v2.constants import TEAM_NAME_MAPPING
 from pprint import pprint
 
+def log_section(title: str) -> None:
+    print("\n" + "=" * 60)
+    print(title)
+    print("=" * 60)
+
+
+def log_info(message: str) -> None:
+    print(f"[INFO] {message}")
+
+
+def log_warning(message: str) -> None:
+    print(f"[WARNING] {message}")
+
+
 DEBUG = False
+
+def normalize_team_name(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Normalize inconsistent
+    team names.
+    """
+
+    df = df.copy()
+
+    before = df["Team"].nunique()
+
+    df["Team"] = (
+        df["Team"]
+        .replace(TEAM_NAME_MAPPING)
+    )
+
+    after = df["Team"].nunique()
+
+    print()
+
+    print("=" * 60)
+    print("NORMALIZE TEAM NAME")
+    print("=" * 60)
+
+    print(f"[INFO] Before : {before}")
+
+    print(f"[INFO] After  : {after}")
+
+    return df
+
+
 
 
 def load_dataset() -> pd.DataFrame:
@@ -41,6 +87,66 @@ def load_dataset() -> pd.DataFrame:
     print(f"[INFO] Shape : {df.shape}")
 
     return df
+
+def aggregate_matches(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+
+    log_section("AGGREGATE MATCHES")
+
+    before = len(df)
+
+    group_columns = [
+
+        "Tournament",
+
+        "Stage",
+
+        "Match Type",
+
+        "Map",
+
+        "Team",
+
+    ]
+    
+    df = df[
+    (df["Stage"] == "All Stages")
+    &
+    (df["Match Type"] == "All Match Types")
+    ].copy()
+
+    after = len(df)
+    log_info(f"Raw Rows        : {before}")
+    log_info(f"All Stages Rows : {after}")
+    
+    grouped = (
+
+        df.groupby(group_columns)
+
+        .agg(
+
+            {
+
+                "Agent": list,
+
+                "Total Wins By Map": "max",
+
+                "Total Loss By Map": "max",
+
+                "Total Maps Played": "max",
+
+                "Year": "first",
+
+            }
+
+        )
+
+        .reset_index()
+
+    )
+
+    return grouped
 
 
 def aggregate_dataset(
@@ -609,6 +715,48 @@ def calculate_reliability(
 
     return df
 
+def calculate_effective_usage(
+    dataset: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Combine Usage Ratio and Reliability.
+
+    Effective Usage represents how reliable
+    a composition usage is.
+    """
+
+    print("\n" + "=" * 60)
+    print("CALCULATE EFFECTIVE USAGE")
+    print("=" * 60)
+
+    dataset = dataset.copy()
+
+    dataset["Effective Usage"] = (
+
+        dataset["Usage Ratio"]
+
+        *
+
+        dataset["Reliability"]
+
+    ).round(4)
+
+    print("[INFO] Effective Usage Calculated")
+
+    print()
+
+    print(
+        dataset[
+            [
+                "Usage Ratio",
+                "Reliability",
+                "Effective Usage",
+            ]
+        ].head(10)
+    )
+
+    return dataset
+
 def calculate_role_statistics(
     dataset: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -915,8 +1063,6 @@ def calculate_composition_familiarity(
 
     usage_min = []
 
-    low_familiarity = []
-
     for _, row in dataset.iterrows():
 
         usage = []
@@ -954,18 +1100,9 @@ def calculate_composition_familiarity(
             round(np.min(usage), 4)
         )
 
-        low_familiarity.append(
-            sum(
-                u < 0.20
-                for u in usage
-            )
-        )
-
     dataset["Agent Usage Mean"] = usage_mean
 
     dataset["Agent Usage Min"] = usage_min
-
-    dataset["Low Familiarity Count"] = low_familiarity
 
     print("[INFO] Composition Familiarity Calculated")
 
@@ -977,177 +1114,111 @@ def calculate_composition_familiarity(
                 "Agent",
                 "Agent Usage Mean",
                 "Agent Usage Min",
-                "Low Familiarity Count",
             ]
         ].head(10)
     )
 
     return dataset
 
-def calculate_agent_statistics(
-    df: pd.DataFrame,
+"""
+======================================================
+TEAM PREDICTION V2 BASELINE
+
+Target Label
+
+Composition Strength
+
+Status
+------
+Frozen
+
+Reason
+------
+Current dataset does not provide
+enough information to build a more
+accurate target.
+
+Future improvements should come
+from richer datasets, not more
+complex formulas.
+======================================================
+"""
+
+def calculate_composition_strength(
+    dataset: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Calculate historical statistics
-    for every agent.
+    Calculate Composition Strength.
+
+    Target label for Team Prediction.
     """
 
     print("\n" + "=" * 60)
-    print("CALCULATE AGENT STATISTICS")
+    print("CALCULATE COMPOSITION STRENGTH")
     print("=" * 60)
 
-    records = []
+    dataset = dataset.copy()
 
-    # -------------------------
-    # Build agent table
-    # -------------------------
+    dataset["Composition Strength"] = (
 
-    for _, row in df.iterrows():
+        (
+            dataset["Effective Usage"] * 0.50
 
-        for agent in row["Agent"]:
+            +
 
-            records.append({
+            dataset["Pattern Usage"] * 0.25
 
-                "Agent": agent,
+            +
 
-                "Winrate": row["Winrate"]
+            dataset["Agent Usage Mean"] * 0.15
 
-            })
+            +
 
-    agent_df = pd.DataFrame(records)
-
-    statistics = (
-
-        agent_df
-
-        .groupby("Agent")
-
-        .agg(
-
-            Played=("Agent", "count"),
-
-            Agent_WR=("Winrate", "mean"),
+            dataset["Agent Usage Min"] * 0.10
 
         )
 
-        .round(4)
+        * 100
 
-        .reset_index()
+    ).round(2)
 
-    )
-
-    print(statistics.head())
+    print("[INFO] Composition Strength Calculated")
 
     print()
 
     print(
 
-        f"[INFO] Total Agent : {len(statistics)}"
-
-    )
-
-    return statistics
-
-def calculate_composition_statistics(
-    df: pd.DataFrame,
-    agent_statistics: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Add historical agent statistics
-    into each composition.
-
-    Features
-    --------
-    Agent WR Mean
-
-    Agent WR Min
-
-    Agent WR Max
-
-    Agent Played Mean
-    """
-
-    print("\n" + "=" * 60)
-    print("CALCULATE COMPOSITION STATISTICS")
-    print("=" * 60)
-
-    agent_lookup = (
-
-        agent_statistics
-
-        .set_index("Agent")
-
-        .to_dict("index")
-
-    )
-
-    agent_wr_mean = []
-
-    agent_wr_min = []
-
-    agent_wr_max = []
-
-    agent_played_mean = []
-
-    for composition in df["Agent"]:
-
-        wr = []
-
-        played = []
-
-        for agent in composition:
-
-            stats = agent_lookup[agent]
-
-            wr.append(
-                stats["Agent_WR"]
-            )
-
-            played.append(
-                stats["Played"]
-            )
-
-        agent_wr_mean.append(
-            round(np.mean(wr), 4)
-        )
-
-        agent_wr_min.append(
-            round(np.min(wr), 4)
-        )
-
-        agent_wr_max.append(
-            round(np.max(wr), 4)
-        )
-
-        agent_played_mean.append(
-            round(np.mean(played), 2)
-        )
-
-    df["Agent WR Mean"] = agent_wr_mean
-
-    df["Agent WR Min"] = agent_wr_min
-
-    df["Agent WR Max"] = agent_wr_max
-
-    df["Agent Played Mean"] = agent_played_mean
-
-    print("[INFO] Composition Statistics Added")
-
-    print()
-
-    print(
-        df[
+        dataset[
             [
                 "Agent",
-                "Agent WR Mean",
-                "Agent WR Min",
-                "Agent WR Max",
-                "Agent Played Mean",
+                "Composition Strength",
             ]
-        ].head(10)
+        ].head(15)
+
     )
 
-    return df
+    print()
+
+    print(
+
+        dataset["Composition Strength"]
+
+        .describe()
+
+    )
+
+    return dataset
+
+def build_target_label( 
+    dataset: pd.DataFrame,
+):
+    """
+    Build Target Label.
+    """
+
+    dataset = calculate_composition_strength(dataset)
+
+    return dataset
 
 OUTPUT_DATASET = (
 
@@ -1211,19 +1282,19 @@ def main():
 
     dataset = calculate_reliability(dataset)
     
+    dataset = calculate_effective_usage(dataset)
+    
     dataset = calculate_role_statistics(dataset)
 
     dataset = calculate_role_pattern_statistics(dataset)
     
     dataset = calculate_historical_statistics(dataset)
-    
-    agent_statistics = calculate_agent_statistics(dataset)
-    
+        
     agent_familiarity = calculate_agent_familiarity(dataset)
-    
-    dataset = calculate_composition_statistics(dataset, agent_statistics)
-    
+        
     dataset = calculate_composition_familiarity(dataset, agent_familiarity)
+    
+    dataset = build_target_label(dataset)
     
     print()
 
