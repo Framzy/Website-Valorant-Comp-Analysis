@@ -1,4 +1,4 @@
-from training_v2.config import DATASET_PATH
+from training_v2.team.config import DATASET_PATH
 import pandas as pd
 
 TEAM = "Gen.G"

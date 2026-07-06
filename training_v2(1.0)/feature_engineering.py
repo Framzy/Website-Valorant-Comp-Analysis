@@ -6,7 +6,7 @@ Feature Engineering V2
 import pandas as pd
 import numpy as np
 import ast
-from training_v2.config import (
+from training_v2.team.config import (
     TEAM_DATASET_PATH, FEATURE_COLUMNS, TARGET_COLUMN, AGENT_ROLE_MAP  
 )
 from sklearn.preprocessing import OneHotEncoder, MultiLabelBinarizer

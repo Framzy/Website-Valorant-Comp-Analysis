@@ -27,7 +27,7 @@ from sklearn.preprocessing import (
 
 from xgboost import XGBRegressor
 
-from training_v2.config import (
+from training_v2.team.config import (
     AGENT_ROLE_MAP,
     CV_FOLDS,
     DATASET_PATH,
@@ -40,7 +40,7 @@ from training_v2.config import (
     MIN_YEAR,
 )
 
-from training_v2.constants import TEAM_NAME_MAPPING
+from training_v2.team.constants import TEAM_NAME_MAPPING
 
 # ==========================================================
 # RANDOM SEED

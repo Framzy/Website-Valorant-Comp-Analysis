@@ -5,7 +5,7 @@ Analyze Training Samples
 
 import pandas as pd
 
-from training_v2.config import TEAM_DATASET_PATH
+from training_v2.team.config import TEAM_DATASET_PATH
 
 
 def load_dataset():

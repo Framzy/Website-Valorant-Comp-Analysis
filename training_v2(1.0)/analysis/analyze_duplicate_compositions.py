@@ -15,7 +15,7 @@ from collections import Counter
 
 import pandas as pd
 
-from training_v2.config import DATASET_PATH
+from training_v2.team.config import DATASET_PATH
 from training_v2.training_utils import aggregate_matches
 
 

@@ -11,7 +11,7 @@ from training_v2.training_utils import (
     filter_training_dataset,
 )
 
-from training_v2.feature_engineering import (
+from training_v2.team.feature_engineering import (
     load_dataset,
     build_feature_pipeline,
 )

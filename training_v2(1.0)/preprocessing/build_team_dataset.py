@@ -8,13 +8,13 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from training_v2.config import (
+from training_v2.team.config import (
     DATASET_PATH,
     DATASET_DIR,
     AGENT_ROLE_MAP,
 )
 from training_v2.training_utils import aggregate_matches
-from training_v2.preprocessing.composition_normalizer import (
+from training_v2.team.preprocessing.composition_normalizer import (
     analyze_roles,
     calculate_role_distribution,
     allocate_role_slots,
