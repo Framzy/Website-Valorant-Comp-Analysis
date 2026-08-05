@@ -1,11 +1,16 @@
 {
-    "model": "XGBoost",
+    "model_name": "Team Prediction V2",
     "version": "2.0",
-    "target": "Composition Strength",
+    "status": "Production Baseline",
+    "algorithm": "XGBoost Regressor",
+    "prediction_target": "Winrate",
+    "primary_score": "Composition Strength",
     "feature_count": 115,
     "train_size": 1757,
     "test_size": 440,
-    "mae": 0.2453,
-    "rmse": 0.3171,
-    "r2": 0.1981
+    "evaluation": {
+        "mae": 0.2453,
+        "rmse": 0.3171,
+        "r2": 0.1981
+    }
 }

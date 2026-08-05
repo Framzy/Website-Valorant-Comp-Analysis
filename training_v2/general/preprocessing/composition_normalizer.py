@@ -19,7 +19,9 @@ Output:
 """
 import math
 
-from training_v2.team.config import AGENT_ROLE_MAP
+from pprint import pprint
+
+from training_v2.general.config import AGENT_ROLE_MAP
 
 ROLE_ORDER = [
     "duelist",
@@ -381,8 +383,6 @@ if __name__ == "__main__":
 
     }
     
-
-    from pprint import pprint
 
     analysis = analyze_roles(sample)
 
