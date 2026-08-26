@@ -21,14 +21,10 @@ import math
 
 from pprint import pprint
 
-from training_v2.general.config import AGENT_ROLE_MAP
-
-ROLE_ORDER = [
-    "duelist",
-    "initiator",
-    "controller",
-    "sentinel",
-]
+from training_v2.general.constants import (
+    AGENT_ROLE_MAP,
+    ROLE_ORDER,
+)
 
 DEBUG = False
 
@@ -367,22 +363,50 @@ if __name__ == "__main__":
 
     sample = {
 
-        "omen":14,
+        "omen": {
+            "played": 14,
+            "wins": 8,
+            "losses": 6,
+        },
 
-        "jett":14,
+        "jett": {
+            "played": 14,
+            "wins": 7,
+            "losses": 7,
+        },
 
-        "sova":14,
+        "sova": {
+            "played": 14,
+            "wins": 9,
+            "losses": 5,
+        },
 
-        "kayo":10,
+        "kayo": {
+            "played": 10,
+            "wins": 5,
+            "losses": 5,
+        },
 
-        "killjoy":8,
+        "killjoy": {
+            "played": 8,
+            "wins": 5,
+            "losses": 3,
+        },
 
-        "cypher":6,
+        "cypher": {
+            "played": 6,
+            "wins": 4,
+            "losses": 2,
+        },
 
-        "deadlock":4
+        "deadlock": {
+            "played": 4,
+            "wins": 2,
+            "losses": 2,
+        },
 
     }
-    
+
 
     analysis = analyze_roles(sample)
 

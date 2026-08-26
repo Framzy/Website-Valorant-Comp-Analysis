@@ -10,8 +10,8 @@ import pandas as pd
 from training_v2.general.config import (
     DATASET_PATH,
     DATASET_DIR,
-    AGENT_ROLE_MAP,
 )
+
 from training_v2.general.preprocessing.composition_normalizer import (
     analyze_roles,
     calculate_role_distribution,
