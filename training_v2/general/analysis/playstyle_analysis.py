@@ -2,7 +2,9 @@ import ast
 from pathlib import Path
 
 import pandas as pd
-
+from training_v2.general.constants import AGENT_ROLE_MAP
+from training_v2.general.constants import ROLE_ORDER
+from training_v2.general.constants import PLAYSTYLE_MAP
 
 # ============================================================
 # PATH
@@ -15,78 +17,6 @@ DATASET_PATH = (
     / "dataset"
     / "valorant_dataset_general_v2.csv"
 )
-
-
-# ============================================================
-# ROLE CONFIGURATION
-# ============================================================
-
-AGENT_ROLE_MAP = {
-    # Duelist
-    "jett": "duelist",
-    "neon": "duelist",
-    "phoenix": "duelist",
-    "raze": "duelist",
-    "reyna": "duelist",
-    "yoru": "duelist",
-    "iso": "duelist",
-
-    # Initiator
-    "breach": "initiator",
-    "fade": "initiator",
-    "gekko": "initiator",
-    "kayo": "initiator",
-    "skye": "initiator",
-    "sova": "initiator",
-    "tejo": "initiator",
-
-    # Controller
-    "astra": "controller",
-    "brimstone": "controller",
-    "clove": "controller",
-    "harbor": "controller",
-    "miks": "controller",
-    "omen": "controller",
-    "viper": "controller",
-
-    # Sentinel
-    "chamber": "sentinel",
-    "cypher": "sentinel",
-    "deadlock": "sentinel",
-    "killjoy": "sentinel",
-    "sage": "sentinel",
-    "veto": "sentinel",
-    "vyse": "sentinel",
-    "waylay": "sentinel",
-}
-
-
-ROLE_ORDER = [
-    "duelist",
-    "initiator",
-    "controller",
-    "sentinel",
-]
-
-
-# ============================================================
-# PLAYSTYLE CONFIGURATION
-# ============================================================
-
-PLAYSTYLE_MAP = {
-    "1D-2I-1C-1S": "STANDARD",
-        
-    "1D-1I-2C-1S": "CONTROL",
-    "1D-2I-2C-0S": "CONTROL",
-    "2D-1I-2C-0S": "CONTROL",
-        
-    "2D-1I-1C-1S": "AGGRESSIVE",
-    "2D-2I-1C-0S": "AGGRESSIVE",
-        
-    "1D-1I-1C-2S": "UTILITY_HEAVY",
-    "0D-2I-2C-1S": "UTILITY_HEAVY",
-    "0D-2I-1C-2S": "UTILITY_HEAVY"
-}
 
 # ============================================================
 # LOAD DATASET
