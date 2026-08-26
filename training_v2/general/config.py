@@ -90,62 +90,6 @@ XGB_PARAMS = {
 }
 
 # ==========================================================
-# ROLE ORDER
-# ==========================================================
-
-ROLE_ORDER = [
-    "duelist",
-    "initiator",
-    "controller",
-    "sentinel"
-]
-
-# ==========================================================
-# AGENT ROLE MAP
-# ==========================================================
-
-AGENT_ROLE_MAP = {
-
-    # Duelist
-    "iso": "duelist",
-    "jett": "duelist",
-    "raze": "duelist",
-    "reyna": "duelist",
-    "yoru": "duelist",
-    "neon": "duelist",
-    "phoenix": "duelist",
-    "waylay": "duelist",
-
-    # Initiator
-    "breach": "initiator",
-    "fade": "initiator",
-    "gekko": "initiator",
-    "kayo": "initiator",
-    "skye": "initiator",
-    "sova": "initiator",
-    "tejo": "initiator",
-
-    # Controller
-    "astra": "controller",
-    "brimstone": "controller",
-    "clove": "controller",
-    "harbor": "controller",
-    "miks": "controller",
-    "omen": "controller",
-    "viper": "controller",
-
-    # Sentinel
-    "chamber": "sentinel",
-    "cypher": "sentinel",
-    "deadlock": "sentinel",
-    "killjoy": "sentinel",
-    "sage": "sentinel",
-    "veto": "sentinel",
-    "vyse": "sentinel"
-
-}
-
-# ==========================================================
 # Training Dataset Filter
 # ==========================================================
 
