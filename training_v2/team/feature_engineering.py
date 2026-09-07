@@ -229,6 +229,8 @@ def build_role_pattern_features(
 
             int(duelist >= 2),
 
+            int(sentinel >= 2),
+
         ])
 
     pattern_features = np.array(pattern_features)
@@ -438,6 +440,7 @@ def build_feature_names(
         "double_controller",
         "double_initiator",
         "double_duelist",
+        "double_sentinel",
     ])
     
     # -------------------------
