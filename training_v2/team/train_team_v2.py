@@ -241,6 +241,22 @@ def save_model(
 
     print(f"[INFO] Saved : {path}")
     
+def save_encoders(
+    encoders,
+):
+    """
+    Save encoders.
+    """
+
+    path = MODEL_TEAM_DIR / "encoders.joblib"
+    
+    joblib.dump(
+        encoders,
+        path,
+    )
+
+    print(f"[INFO] Saved : {path}")
+    
 def save_feature_names(
     feature_names,
 ):
@@ -388,6 +404,10 @@ def main():
     )
 
     save_model(model)
+
+    save_encoders(
+        pipeline["encoders"]
+    )
 
     save_feature_names(
         pipeline["feature_names"]

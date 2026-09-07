@@ -5,7 +5,7 @@
     "algorithm": "XGBoost Regressor",
     "prediction_target": "Winrate",
     "primary_score": "Composition Strength",
-    "feature_count": 115,
+    "feature_count": 116,
     "train_size": 1757,
     "test_size": 440,
     "evaluation": {
