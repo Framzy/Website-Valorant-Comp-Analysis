@@ -1,13 +1,11 @@
+from __future__ import annotations
+
 import ast
+from pathlib import Path
+
 import pandas as pd
 
-
-# ============================================================
-# PATH
-# ============================================================
-
 from backend.config import GENERAL_DATASET_PATH
-
 from backend.constants import (
     AGENT_ROLES,
     PLAYSTYLE_MAP,
@@ -68,41 +66,6 @@ def build_composition_key(agents):
             for agent in agents
         )
     )
-
-
-def calculate_winrate(row):
-    """
-    Calculate historical winrate.
-    """
-
-    played = row["Total Maps Played"]
-
-    if played <= 0:
-        return 0.0
-
-    return (
-        row["Total Wins By Map"]
-        / played
-    )
-
-
-def calculate_pick_rate(
-    row,
-    context_maps,
-):
-    """
-    Calculate composition pick rate
-    within Map + Year context.
-    """
-
-    if context_maps <= 0:
-        return 0.0
-
-    return (
-        row["Total Maps Played"]
-        / context_maps
-    )
-
 
 # ============================================================
 # ROLE / PLAYSTYLE
@@ -223,9 +186,7 @@ def find_exact_composition(
     Find exact historical composition.
     """
 
-    composition_key = build_composition_key(
-        agents
-    )
+    composition_key = build_composition_key(agents)
 
     result = df[
         (df["Map"].str.lower() == map_name.lower())
@@ -284,43 +245,24 @@ def get_recommendations(
 
     candidates = df.copy()
 
-    # --------------------------------------------------------
-    # MAP FILTER
-    # --------------------------------------------------------
-
     if map_name is not None:
-
         candidates = candidates[
             candidates["Map"].str.lower()
             == map_name.lower()
         ]
 
-    # --------------------------------------------------------
-    # YEAR FILTER
-    # --------------------------------------------------------
-
     if year is not None:
-
         candidates = candidates[
             candidates["Year"] == year
         ]
 
-    # --------------------------------------------------------
-    # PLAYSTYLE FILTER
-    # --------------------------------------------------------
-
     if playstyle is not None:
-
         candidates = candidates[
             candidates["Playstyle"] == playstyle
         ]
 
     if candidates.empty:
         return []
-
-    # --------------------------------------------------------
-    # RANKING
-    # --------------------------------------------------------
 
     candidates = candidates.sort_values(
         by=[
@@ -339,39 +281,16 @@ def get_recommendations(
         candidates.head(limit).iterrows(),
         start=1,
     ):
-
         recommendations.append({
-
             "rank": rank,
-
             "map": row["Map"],
-
-            "year": int(
-                row["Year"]
-            ),
-
+            "year": int(row["Year"]),
             "agents": row["Agent"],
-
-            "role_pattern": row[
-                "Role Pattern"
-            ],
-
-            "playstyle": row[
-                "Playstyle"
-            ],
-
-            "total_maps": int(
-                row["Total Maps Played"]
-            ),
-
-            "pick_rate": float(
-                row["Pick Rate"]
-            ),
-
-            "winrate": float(
-                row["Winrate"]
-            ),
-
+            "role_pattern": row["Role Pattern"],
+            "playstyle": row["Playstyle"],
+            "total_maps": int(row["Total Maps Played"]),
+            "pick_rate": float(row["Pick Rate"]),
+            "winrate": float(row["Winrate"]),
         })
 
     return recommendations
@@ -392,7 +311,6 @@ def get_fallback_recommendations(
     Find recommendations using fallback hierarchy.
 
     Priority:
-
         MAP + YEAR + PLAYSTYLE
         MAP + YEAR
         MAP
@@ -401,12 +319,7 @@ def get_fallback_recommendations(
     UNCLASSIFIED skips the playstyle level.
     """
 
-    # ========================================================
-    # 1. MAP + YEAR + PLAYSTYLE
-    # ========================================================
-
     if playstyle != "UNCLASSIFIED":
-
         recommendations = get_recommendations(
             df=df,
             map_name=map_name,
@@ -416,16 +329,11 @@ def get_fallback_recommendations(
         )
 
         if recommendations:
-
             return (
                 recommendations,
                 "MAP_YEAR_PLAYSTYLE",
             )
 
-    # ========================================================
-    # 2. MAP + YEAR
-    # ========================================================
-
     recommendations = get_recommendations(
         df=df,
         map_name=map_name,
@@ -434,16 +342,11 @@ def get_fallback_recommendations(
     )
 
     if recommendations:
-
         return (
             recommendations,
             "MAP_YEAR",
         )
 
-    # ========================================================
-    # 3. MAP
-    # ========================================================
-
     recommendations = get_recommendations(
         df=df,
         map_name=map_name,
@@ -451,166 +354,148 @@ def get_fallback_recommendations(
     )
 
     if recommendations:
-
         return (
             recommendations,
             "MAP",
         )
 
-    # ========================================================
-    # 4. GLOBAL
-    # ========================================================
-
     recommendations = get_recommendations(
         df=df,
         limit=limit,
     )
 
     if recommendations:
-
         return (
             recommendations,
             "GLOBAL",
         )
 
-    # ========================================================
-    # NO DATA
-    # ========================================================
-
     return [], None
+
 
 # ============================================================
 # MAIN SERVICE
 # ============================================================
 
-def analyze_composition(
-    map_name,
-    year,
-    agents,
-    dataset=None,
-    recommendation_limit=3,
-):
+class GeneralAnalysisService:
     """
-    Analyze a General composition.
+    Production service for General Analysis.
 
-    Flow:
-
-        Input
-          ↓
-        Playstyle
-          ↓
-        Exact Historical Lookup
-          ↓
-        Map + Year + Playstyle
-          ↓
-        Popularity Recommendation
+    The dataset is loaded and prepared once when the
+    service is initialized, then reused for every request.
     """
 
-    if dataset is None:
-        dataset = load_dataset()
+    def __init__(self, dataset_path=GENERAL_DATASET_PATH):
+        self.dataset_path = Path(dataset_path)
 
-    df = prepare_dataset(dataset)
+        dataset = load_dataset(self.dataset_path)
+        self.dataset = prepare_dataset(dataset)
 
-    normalized_agents = sorted(
-        agent.strip().lower()
-        for agent in agents
-    )
+    def analyze_composition(
+        self,
+        map_name,
+        year,
+        agents,
+        recommendation_limit=3,
+    ):
+        """
+        Analyze a General composition.
 
-    if len(normalized_agents) != 5:
-        raise ValueError(
-            "Composition must contain exactly 5 agents."
+        Flow:
+            Input
+            ↓
+            Playstyle
+            ↓
+            Exact Historical Lookup
+            ↓
+            Map + Year + Playstyle
+            ↓
+            Popularity Recommendation
+        """
+
+        normalized_agents = sorted(
+            agent.strip().lower()
+            for agent in agents
         )
 
-    if len(set(normalized_agents)) != 5:
-        raise ValueError(
-            "Composition cannot contain duplicate agents."
+        if len(normalized_agents) != 5:
+            raise ValueError(
+                "Composition must contain exactly 5 agents."
+            )
+
+        if len(set(normalized_agents)) != 5:
+            raise ValueError(
+                "Composition cannot contain duplicate agents."
+            )
+
+        playstyle = get_playstyle(
+            normalized_agents
         )
 
-    playstyle = get_playstyle(
-        normalized_agents
-    )
-
-    historical = find_exact_composition(
-        df=df,
-        map_name=map_name,
-        year=year,
-        agents=normalized_agents,
-    )
-
-    # ========================================================
-    # RECOMMENDATION
-    # ========================================================
-
-    fallback = historical is None
-
-    if historical is not None:
-
-        # ----------------------------------------------------
-        # Exact composition exists.
-        # Recommend compositions from the same
-        # Map + Year + Playstyle context.
-        # ----------------------------------------------------
-
-        recommendations = get_recommendations(
-            df=df,
+        historical = find_exact_composition(
+            df=self.dataset,
             map_name=map_name,
             year=year,
-            playstyle=playstyle["name"],
-            limit=recommendation_limit,
+            agents=normalized_agents,
         )
 
-        recommendation_source = (
-            "MAP_YEAR_PLAYSTYLE"
-        )
+        fallback = historical is None
 
-    else:
+        if historical is not None:
+            recommendations = get_recommendations(
+                df=self.dataset,
+                map_name=map_name,
+                year=year,
+                playstyle=playstyle["name"],
+                limit=recommendation_limit,
+            )
 
-        # ----------------------------------------------------
-        # Exact composition does not exist.
-        # Use fallback hierarchy.
-        # ----------------------------------------------------
+            recommendation_source = (
+                "MAP_YEAR_PLAYSTYLE"
+            )
 
-        (
-            recommendations,
-            recommendation_source,
-        ) = get_fallback_recommendations(
-            df=df,
-            map_name=map_name,
-            year=year,
-            playstyle=playstyle["name"],
-            limit=recommendation_limit,
-        )
+        else:
+            (
+                recommendations,
+                recommendation_source,
+            ) = get_fallback_recommendations(
+                df=self.dataset,
+                map_name=map_name,
+                year=year,
+                playstyle=playstyle["name"],
+                limit=recommendation_limit,
+            )
 
-    return {
-        "input": {
-            "map": map_name,
-            "year": int(year),
-            "agents": normalized_agents,
-        },
-
-        "playstyle": {
-            "name": playstyle["name"],
-            "pattern": playstyle["pattern"],
-        },
-
-        "historical": (
-            historical
-            if historical is not None
-            else {
-                "found": False,
+        return {
+            "input": {
                 "map": map_name,
                 "year": int(year),
                 "agents": normalized_agents,
-            }
-        ),
+            },
 
-        "recommendations": recommendations,
+            "playstyle": {
+                "name": playstyle["name"],
+                "pattern": playstyle["pattern"],
+            },
 
-        "fallback": fallback,
+            "historical": (
+                historical
+                if historical is not None
+                else {
+                    "found": False,
+                    "map": map_name,
+                    "year": int(year),
+                    "agents": normalized_agents,
+                }
+            ),
 
-        "fallback_source": (
-            recommendation_source
-            if fallback
-            else None
-        ),
-    }
+            "recommendations": recommendations,
+
+            "fallback": fallback,
+
+            "fallback_source": (
+                recommendation_source
+                if fallback
+                else None
+            ),
+        }
