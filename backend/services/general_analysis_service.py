@@ -385,7 +385,10 @@ class GeneralAnalysisService:
     service is initialized, then reused for every request.
     """
 
-    def __init__(self, dataset_path=GENERAL_DATASET_PATH):
+    def __init__(
+        self, 
+        dataset_path=GENERAL_DATASET_PATH
+    ):
         self.dataset_path = Path(dataset_path)
 
         dataset = load_dataset(self.dataset_path)

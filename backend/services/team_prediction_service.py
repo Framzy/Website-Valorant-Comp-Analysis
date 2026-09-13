@@ -253,6 +253,70 @@ class TeamPredictionService:
 
         return row, False, None
 
+    # ========================================================
+    # OPTIONS
+    # ========================================================
+
+    def get_available_years(self) -> list[int]:
+        """
+        Return all years available in the Team V2 dataset.
+        """
+        if "Year" not in self.dataset.columns:
+            raise ValueError("Team dataset is missing the 'Year' column.")
+
+        return sorted(
+            int(year)
+            for year in self.dataset["Year"].dropna().unique()
+        )
+
+    def get_available_maps(self, year: int) -> list[str]:
+        """
+        Return maps available for the selected year.
+        """
+        try:
+            normalized_year = int(year)
+        except (TypeError, ValueError):
+            raise ValueError("Year must be an integer.")
+
+        result = self.dataset[
+            self.dataset["Year"] == normalized_year
+        ]["Map"].dropna().unique()
+
+        if len(result) == 0:
+            raise ValueError(
+                f"No Team V2 data for year {normalized_year}."
+            )
+
+        return sorted(str(map_name) for map_name in result)
+
+    def get_available_teams(
+        self,
+        year: int,
+        map_name: str,
+    ) -> list[str]:
+        """
+        Return teams available for the selected year and map.
+        """
+        try:
+            normalized_year = int(year)
+        except (TypeError, ValueError):
+            raise ValueError("Year must be an integer.")
+
+        if not isinstance(map_name, str) or not map_name.strip():
+            raise ValueError("Map is required.")
+
+        result = self.dataset[
+            (self.dataset["Year"] == normalized_year)
+            & (self.dataset["Map"].str.lower() == map_name.strip().lower())
+        ]["Team"].dropna().unique()
+
+        if len(result) == 0:
+            raise ValueError(
+                f"No Team V2 data for {map_name} / {normalized_year}."
+            )
+
+        return sorted(str(team) for team in result)
+
     def predict(
         self,
         team: str,
