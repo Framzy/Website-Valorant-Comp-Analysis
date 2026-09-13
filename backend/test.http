@@ -1,0 +1,255 @@
+### =========================================================
+### GENERAL ANALYSIS
+### =========================================================
+
+### 1. General Analysis - valid
+POST http://localhost:5000/api/general/analyze
+Content-Type: application/json
+Accept: application/json
+
+{
+  "map": "Abyss",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+###
+
+### 2. General Analysis - missing field
+POST http://localhost:5000/api/general/analyze
+Content-Type: application/json
+Accept: application/json
+
+{
+  "map": "Abyss",
+  "year": 2024
+}
+
+###
+
+### 3. General Analysis - invalid JSON structure
+POST http://localhost:5000/api/general/analyze
+Content-Type: application/json
+Accept: application/json
+
+{
+  "map": "Abyss",
+  "year": 2024,
+  "agents": "cypher,jett,kayo,omen,sova"
+}
+
+###
+
+### 4. General Analysis - unknown map
+POST http://localhost:5000/api/general/analyze
+Content-Type: application/json
+Accept: application/json
+
+{
+  "map": "UnknownMap",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+
+### =========================================================
+### TEAM OPTIONS - YEARS
+### =========================================================
+
+### 5. Get available years
+GET http://localhost:5000/api/team/options/years
+Accept: application/json
+
+###
+
+### 6. Get maps - valid year
+GET http://localhost:5000/api/team/options/maps?year=2024
+Accept: application/json
+
+###
+
+### 7. Get maps - missing year
+GET http://localhost:5000/api/team/options/maps
+Accept: application/json
+
+###
+
+### 8. Get maps - invalid year
+GET http://localhost:5000/api/team/options/maps?year=abc
+Accept: application/json
+
+
+### =========================================================
+### TEAM OPTIONS - TEAMS
+### =========================================================
+
+### 9. Get teams - valid
+GET http://localhost:5000/api/team/options/teams?year=2024&map=Abyss
+Accept: application/json
+
+###
+
+### 10. Get teams - missing year
+GET http://localhost:5000/api/team/options/teams?map=Abyss
+Accept: application/json
+
+###
+
+### 11. Get teams - missing map
+GET http://localhost:5000/api/team/options/teams?year=2024
+Accept: application/json
+
+###
+
+### 12. Get teams - invalid year
+GET http://localhost:5000/api/team/options/teams?year=abc&map=Abyss
+Accept: application/json
+
+###
+
+### 13. Get teams - unknown map
+GET http://localhost:5000/api/team/options/teams?year=2024&map=UnknownMap
+Accept: application/json
+
+
+### =========================================================
+### TEAM PREDICTION
+### =========================================================
+
+### 14. Team Prediction - valid
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "Abyss",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+###
+
+### 15. Team Prediction - missing field
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "Abyss",
+  "year": 2024
+}
+
+###
+
+### 16. Team Prediction - invalid agents structure
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "Abyss",
+  "year": 2024,
+  "agents": "cypher,jett,kayo,omen,sova"
+}
+
+###
+
+### 17. Team Prediction - unknown team
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "UnknownTeam",
+  "map": "Abyss",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+###
+
+### 18. Team Prediction - invalid map/year combination
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "UnknownMap",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+###
+
+### 19. Team Prediction - unknown agent
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "Abyss",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "unknown_agent"
+  ]
+}
+
+
+### =========================================================
+### METHOD TESTING
+### =========================================================
+
+### 20. Wrong method - General Analysis
+GET http://localhost:5000/api/general/analyze
+Accept: application/json
+
+###
+
+### 21. Wrong method - Team Prediction
+GET http://localhost:5000/api/team/predict
+Accept: application/json
+
+###
+
+### 22. Unknown endpoint
+GET http://localhost:5000/api/unknown
+Accept: application/json
