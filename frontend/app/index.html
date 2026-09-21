@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="description"
+      content="Valorant Agent Comp Analyst untuk analisis komposisi agent dan prediksi performa tim berdasarkan data historis."
+    />
+
+    <link rel="icon" type="image/png" href="/src/assets/logo_valorant.png" />
+
+    <link rel="stylesheet" href="/src/style.css" />
+
+    <title>Valorant Agent Comp Analyst</title>
+  </head>
+
+  <body>
+    <main class="container">
+      <!-- =====================================================
+           HEADER
+      ====================================================== -->
+      <section class="logo">
+        <img src="/src/assets/logo_valorant.png" alt="Valorant Logo" />
+
+        <p>Agent Comp Analyst</p>
+      </section>
+
+      <!-- =====================================================
+           MODE TABS
+      ====================================================== -->
+      <div class="mode-tabs" id="modeTabs">
+        <!-- General Analysis -->
+        <button
+          type="button"
+          class="mode-tab active"
+          data-mode="general"
+          id="tabGeneral"
+        >
+          <span class="mode-tab-icon">🎯</span>
+
+          <span class="mode-tab-label"> Casual </span>
+
+          <span class="mode-tab-desc"> Map + Year + Agents </span>
+        </button>
+
+        <!-- Team Prediction -->
+        <button type="button" class="mode-tab" data-mode="team" id="tabTeam">
+          <span class="mode-tab-icon">🏆</span>
+
+          <span class="mode-tab-label"> Pro Team </span>
+
+          <span class="mode-tab-desc"> Team + Map + Year + Agents </span>
+        </button>
+      </div>
+
+      <!-- =====================================================
+           MAIN CONTENT
+      ====================================================== -->
+      <section class="content">
+        <!-- ===================================================
+             AGENT PICKER
+        ==================================================== -->
+        <div class="topSection">
+          <div class="agent-header">
+            <p>Pilih Agent</p>
+
+            <span class="agent-counter" id="agentCounter">
+              0 / 5 Agent Dipilih
+            </span>
+          </div>
+
+          <!-- Role Filter -->
+          <div class="role-filter" id="roleFilter">
+            <button type="button" class="role-tab active" data-role="all">
+              Semua
+            </button>
+
+            <button type="button" class="role-tab" data-role="duelist">
+              Duelist
+            </button>
+
+            <button type="button" class="role-tab" data-role="initiator">
+              Initiator
+            </button>
+
+            <button type="button" class="role-tab" data-role="controller">
+              Controller
+            </button>
+
+            <button type="button" class="role-tab" data-role="sentinel">
+              Sentinel
+            </button>
+          </div>
+
+          <!-- Agent cards rendered by JavaScript -->
+          <div class="Agent" id="Agent"></div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ===================================================
+             BOTTOM SECTION
+        ==================================================== -->
+        <div class="bottomSection">
+          <!-- =================================================
+               GENERAL ANALYSIS FORM
+          ================================================== -->
+          <div class="bottomForm mode-panel active" id="formGeneral">
+            <!-- Year -->
+            <div class="Year">
+              <p>Pilih Tahun</p>
+
+              <select
+                title="Year Option"
+                name="Year_Option_General"
+                id="yearGeneral"
+                required
+              >
+                <option value="" hidden>— Pilih Tahun —</option>
+              </select>
+            </div>
+
+            <!-- Map -->
+            <div class="Map">
+              <p>Pilih Map</p>
+
+              <select
+                title="Map Option"
+                name="Map_Option_General"
+                id="mapGeneral"
+                required
+              >
+                <option value="" hidden>— Pilih Map —</option>
+              </select>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+              <button type="button" class="btn-predict" id="btnAnalyzeGeneral">
+                Analisis
+              </button>
+
+              <button type="button" class="btn-reset" id="btnResetGeneral">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- =================================================
+               TEAM PREDICTION FORM
+          ================================================== -->
+          <div class="bottomForm mode-panel" id="formTeam">
+            <!-- Year -->
+            <div class="Year">
+              <p>Pilih Tahun</p>
+
+              <select
+                title="Year Option"
+                name="Year_Option_Team"
+                id="yearTeam"
+                required
+              >
+                <option value="" hidden>— Pilih Tahun —</option>
+              </select>
+            </div>
+
+            <!-- Map -->
+            <div class="Map">
+              <p>Pilih Map</p>
+
+              <select
+                title="Map Option"
+                name="Map_Option_Team"
+                id="mapTeam"
+                required
+                disabled
+              >
+                <option value="" hidden>— Pilih Map —</option>
+              </select>
+            </div>
+
+            <!-- Team -->
+            <div class="Team">
+              <p>Pilih Team</p>
+
+              <select
+                title="Team Option"
+                name="Team_Option"
+                id="team"
+                required
+                disabled
+              >
+                <option value="" hidden>— Pilih Tim —</option>
+              </select>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+              <button type="button" class="btn-predict" id="btnPredictTeam">
+                Prediksi
+              </button>
+
+              <button type="button" class="btn-reset" id="btnResetTeam">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- =================================================
+               GENERAL INPUT SUMMARY
+          ================================================== -->
+          <div class="inputPick mode-panel active" id="pickGeneral">
+            <div class="yearPick">
+              <p>Tahun Dipilih</p>
+
+              <p id="namaTahunGeneral">—</p>
+            </div>
+
+            <div class="mapPick">
+              <p>Map Dipilih</p>
+
+              <p id="namaMapGeneral">—</p>
+            </div>
+
+            <div class="agentPick">
+              <p>Agent Dipilih</p>
+
+              <p id="namaAgentGeneral">—</p>
+            </div>
+          </div>
+
+          <!-- =================================================
+               TEAM INPUT SUMMARY
+          ================================================== -->
+          <div class="inputPick mode-panel" id="pickTeam">
+            <div class="yearPick">
+              <p>Tahun Dipilih</p>
+
+              <p id="namaTahunTeam">—</p>
+            </div>
+
+            <div class="teamPick">
+              <p>Team Dipilih</p>
+
+              <p id="namaTeam">—</p>
+            </div>
+
+            <div class="mapPick">
+              <p>Map Dipilih</p>
+
+              <p id="namaMapTeam">—</p>
+            </div>
+
+            <div class="agentPick">
+              <p>Agent Dipilih</p>
+
+              <p id="namaAgentTeam">—</p>
+            </div>
+          </div>
+
+          <!-- =================================================
+               GENERAL ANALYSIS RESULT
+          ================================================== -->
+          <div class="outputPredict mode-panel active" id="generalResult">
+            <div class="outputContent">
+              <!-- General Historical Summary -->
+              <div class="result-header reveal-item">
+                <p class="result-title">Historical Composition Analysis</p>
+
+                <p class="result-subtitle" id="generalResultSummary">
+                  Pilih komposisi dan lakukan analisis.
+                </p>
+              </div>
+
+              <!-- General Stat Cards -->
+              <div class="stat-cards" id="generalStatCards">
+                <!-- Pick Rate -->
+                <div class="stat-card reveal-item">
+                  <div class="stat-icon">📊</div>
+
+                  <div class="stat-info">
+                    <span class="stat-label"> Pick Rate </span>
+
+                    <span class="stat-value" id="generalPickRate"> — </span>
+                  </div>
+                </div>
+
+                <!-- Historical Winrate -->
+                <div class="stat-card reveal-item">
+                  <div class="stat-icon">🎯</div>
+
+                  <div class="stat-info">
+                    <span class="stat-label"> Historical Winrate </span>
+
+                    <span class="stat-value" id="generalWinrate"> — </span>
+                  </div>
+                </div>
+
+                <!-- Total Maps -->
+                <div class="stat-card reveal-item">
+                  <div class="stat-icon">🗺️</div>
+
+                  <div class="stat-info">
+                    <span class="stat-label"> Total Maps </span>
+
+                    <span class="stat-value" id="generalTotalMaps"> — </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- General Composition Details -->
+              <div class="detail-row" id="generalDetailRow">
+                <!-- Playstyle -->
+                <div class="detail-card reveal-item">
+                  <p class="detail-title">Playstyle</p>
+
+                  <p class="detail-value" id="generalPlaystyle">—</p>
+                </div>
+
+                <!-- Role Pattern -->
+                <div class="detail-card reveal-item">
+                  <p class="detail-title">Role Pattern</p>
+
+                  <p class="detail-value" id="generalRolePattern">—</p>
+                </div>
+              </div>
+
+              <!-- Historical Recommendations -->
+              <div
+                class="popular-comps-section reveal-item"
+                id="recommendationsSection"
+              >
+                <p class="popular-comps-title">Historical Recommendations</p>
+
+                <div class="popular-comps-list" id="recommendationsList">
+                  <!-- Filled by general.js -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- =================================================
+               TEAM PREDICTION RESULT
+          ================================================== -->
+          <div class="outputPredict mode-panel" id="teamResult">
+            <div class="outputContent">
+              <!-- Team Prediction Gauge -->
+              <div class="gauge-section" id="teamGaugeSection">
+                <p class="gauge-label" id="teamGaugeLabel">Predicted Winrate</p>
+
+                <div class="gauge-wrapper">
+                  <svg
+                    class="gauge-svg"
+                    viewBox="0 0 200 120"
+                    id="teamGaugeSvg"
+                  >
+                    <!-- Background -->
+                    <path class="gauge-bg" d="M 20 100 A 80 80 0 0 1 180 100" />
+
+                    <!-- Fill -->
+                    <path
+                      class="gauge-fill"
+                      id="teamGaugeFill"
+                      d="M 20 100 A 80 80 0 0 1 180 100"
+                    />
+                  </svg>
+
+                  <div class="gauge-center">
+                    <span class="gauge-status" id="teamGaugeStatus"> — </span>
+
+                    <span class="gauge-sub" id="teamGaugeSubText">
+                      Pilih komposisi dan prediksi
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Team Prediction Stats -->
+              <div class="stat-cards" id="teamStatCards">
+                <!-- Prediction -->
+                <div class="stat-card reveal-item">
+                  <div class="stat-icon">📈</div>
+
+                  <div class="stat-info">
+                    <span class="stat-label"> Predicted Winrate </span>
+
+                    <span class="stat-value" id="teamPredictionWinrate">
+                      —
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Historical Winrate -->
+                <div class="stat-card reveal-item">
+                  <div class="stat-icon">📊</div>
+
+                  <div class="stat-info">
+                    <span class="stat-label"> Historical Winrate </span>
+
+                    <span class="stat-value" id="teamHistoricalWinrate">
+                      —
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Composition Strength -->
+                <div class="stat-card reveal-item">
+                  <div class="stat-icon">💪</div>
+
+                  <div class="stat-info">
+                    <span class="stat-label"> Composition Strength </span>
+
+                    <span class="stat-value" id="teamCompositionStrength">
+                      —
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Team Composition Details -->
+              <div class="detail-row" id="teamDetailRow">
+                <!-- Role Pattern -->
+                <div class="detail-card reveal-item">
+                  <p class="detail-title">Role Pattern</p>
+
+                  <p class="detail-value" id="teamRolePattern">—</p>
+                </div>
+
+                <!-- Role Composition -->
+                <div class="detail-card reveal-item">
+                  <p class="detail-title">Komposisi Role</p>
+
+                  <p class="detail-value" id="teamRoleComposition">—</p>
+                </div>
+              </div>
+
+              <!-- Historical Information -->
+              <div class="combo-section reveal-item" id="teamHistoricalSection">
+                <p class="combo-label">Historical Composition</p>
+
+                <p class="combo-value" id="teamHistoricalStatus">—</p>
+              </div>
+
+              <!-- Debug / Inference Information -->
+              <div
+                class="team-inference-section reveal-item"
+                id="teamInferenceSection"
+              >
+                <p class="combo-label">Model Information</p>
+
+                <p class="combo-value" id="teamFeatureCount">—</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================
+           LOADING
+      ====================================================== -->
+      <div id="overlay" class="loadingOverlay"></div>
+
+      <div id="loading" class="loadingPopup">
+        <span class="loader"></span>
+
+        <p id="loadingMessage">Memproses...</p>
+      </div>
+
+      <!-- =====================================================
+           ERROR POPUP
+      ====================================================== -->
+      <div id="errorOverlay" class="errorOverlay"></div>
+
+      <div
+        id="errorPopup"
+        class="errorPopup"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="errorTitle"
+      >
+        <div class="errorIcon">⚠️</div>
+
+        <h2 class="errorTitle" id="errorTitle">Terjadi Kesalahan</h2>
+
+        <p class="errorMessage" id="errorMessage"></p>
+
+        <button type="button" class="errorCloseBtn" id="errorCloseBtn">
+          Mengerti
+        </button>
+      </div>
+    </main>
+
+    <!-- =====================================================
+         VITE ENTRY POINT
+    ====================================================== -->
+    <script type="module" src="/src/js/main.js"></script>
+  </body>
+</html>
