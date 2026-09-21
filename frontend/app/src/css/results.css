@@ -1,0 +1,552 @@
+/* =========================================================
+   19. RESULT CONTAINER
+   ========================================================= */
+
+.outputPredict {
+  width: 100%;
+  max-width: 1100px;
+
+  opacity: 0;
+
+  max-height: 0;
+
+  overflow: hidden;
+
+  transition:
+    opacity 0.5s ease,
+    max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.outputPredict.visible {
+  opacity: 1;
+
+  max-height: 3000px;
+}
+
+.outputContent {
+  width: 100%;
+
+  background: linear-gradient(135deg, #0f1e2b, #162432);
+
+  border: 1px solid rgba(255, 70, 85, 0.3);
+
+  border-radius: var(--radius-lg);
+
+  box-shadow:
+    0 0 40px rgba(255, 70, 85, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  overflow: hidden;
+
+  display: flex;
+
+  flex-direction: column;
+}
+
+/* =========================================================
+   20. RESULT HEADER
+   ========================================================= */
+
+.result-header {
+  padding: 22px 20px 18px;
+
+  border-bottom: 1px solid var(--border);
+
+  text-align: center;
+}
+
+.result-title {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+
+  letter-spacing: 2px;
+
+  text-transform: uppercase;
+
+  color: var(--red);
+
+  margin-bottom: 5px;
+}
+
+.result-subtitle {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+
+  color: var(--text-muted);
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   21. GAUGE
+   ========================================================= */
+
+.gauge-section {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  padding: 28px 20px 8px;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.gauge-label {
+  margin-bottom: 8px;
+
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+
+  letter-spacing: 2px;
+
+  text-transform: uppercase;
+
+  color: var(--text-muted);
+}
+
+.gauge-wrapper {
+  width: 220px;
+  height: 150px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  position: relative;
+}
+
+.gauge-svg {
+  width: 220px;
+  height: 120px;
+}
+
+.gauge-bg {
+  fill: none;
+
+  stroke: rgba(255, 255, 255, 0.06);
+
+  stroke-width: 14;
+
+  stroke-linecap: round;
+}
+
+.gauge-fill {
+  fill: none;
+
+  stroke: var(--red);
+
+  stroke-width: 14;
+
+  stroke-linecap: round;
+
+  stroke-dasharray: 251.33;
+  stroke-dashoffset: 251.33;
+
+  transition:
+    stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.4s ease,
+    filter 0.4s ease;
+
+  filter: drop-shadow(0 0 8px rgba(255, 70, 85, 0.5));
+}
+
+.gauge-center {
+  position: absolute;
+
+  bottom: 14px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  width: 160px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 4px;
+
+  text-align: center;
+}
+
+.gauge-status {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 1px;
+
+  color: var(--red);
+
+  line-height: 1.2;
+
+  transition: color 0.6s ease;
+
+  word-break: break-word;
+}
+
+.gauge-sub {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+
+  color: var(--text-muted);
+
+  letter-spacing: 0.5px;
+
+  text-transform: uppercase;
+
+  white-space: normal;
+
+  text-align: center;
+}
+
+/* =========================================================
+   22. STAT CARDS
+   ========================================================= */
+
+.stat-cards {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 0;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-card {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 18px 20px;
+
+  border-right: 1px solid var(--border);
+
+  transition: background 0.2s ease;
+}
+
+.stat-card:last-child {
+  border-right: none;
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.stat-icon {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 22px;
+
+  background: var(--red-10);
+
+  border-radius: 10px;
+
+  border: 1px solid var(--red-06);
+}
+
+.stat-info {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  min-width: 0;
+}
+
+.stat-label {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+
+  color: var(--red);
+
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   23. DETAIL ROW
+   ========================================================= */
+
+.detail-row {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 0;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-card {
+  padding: 18px 20px;
+
+  border-right: 1px solid var(--border);
+}
+
+.detail-card:last-child {
+  border-right: none;
+}
+
+.detail-title {
+  margin-bottom: 8px;
+
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+
+  color: var(--text-muted);
+}
+
+.detail-value {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+
+  color: var(--text-primary);
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   24. HISTORICAL SECTION
+   ========================================================= */
+
+.combo-section {
+  padding: 18px 20px;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.combo-label {
+  margin-bottom: 6px;
+
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+
+  color: var(--text-muted);
+}
+
+.combo-value {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+
+  color: var(--text-primary);
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   25. TEAM MODEL INFORMATION
+   ========================================================= */
+
+.team-inference-section {
+  padding: 16px 20px;
+
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.team-inference-section .combo-label {
+  margin-bottom: 5px;
+}
+
+.team-inference-section .combo-value {
+  font-size: 12px;
+
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   26. HISTORICAL RECOMMENDATIONS
+   ========================================================= */
+
+.popular-comps-section {
+  padding: 18px 20px;
+}
+
+.popular-comps-title {
+  margin-bottom: 12px;
+
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+
+  color: var(--text-muted);
+}
+
+.popular-comps-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.popular-comp-card {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 14px 16px;
+
+  background: rgba(255, 255, 255, 0.025);
+
+  border: 1px solid var(--border);
+
+  border-radius: 12px;
+
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.popular-comp-card:hover {
+  background: rgba(255, 70, 85, 0.04);
+
+  border-color: rgba(255, 70, 85, 0.2);
+
+  transform: translateY(-1px);
+}
+
+.popular-comp-rank {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+
+  color: var(--red);
+
+  background: var(--red-10);
+
+  border: 1px solid var(--red-06);
+
+  border-radius: 8px;
+}
+
+.popular-comp-info {
+  flex: 1;
+
+  min-width: 0;
+}
+
+.popular-comp-agents {
+  margin-bottom: 2px;
+
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+
+  color: var(--text-primary);
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+.popular-comp-meta {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+
+  color: var(--text-muted);
+}
+
+.popular-comp-wr {
+  flex-shrink: 0;
+
+  padding: 4px 10px;
+
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+
+  color: var(--text-secondary);
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border-radius: 8px;
+}
+
+/* =========================================================
+   27. REVEAL ANIMATION
+   ========================================================= */
+
+.reveal-item {
+  opacity: 0;
+
+  transform: translateY(12px);
+
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-item.revealed {
+  opacity: 1;
+
+  transform: translateY(0);
+}
