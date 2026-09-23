@@ -59,17 +59,17 @@ api.interceptors.response.use(
 );
 
 // =========================================================
-// TEAM OPTIONS
+// SHARED OPTIONS
 // =========================================================
 
-export async function getTeamYears() {
-  const response = await api.get("/api/team/options/years");
+export async function getAvailableYears() {
+  const response = await api.get("/api/options/years");
 
   return response.data;
 }
 
-export async function getTeamMaps(year) {
-  const response = await api.get("/api/team/options/maps", {
+export async function getAvailableMaps(year) {
+  const response = await api.get("/api/options/maps", {
     params: {
       year,
     },
@@ -77,6 +77,10 @@ export async function getTeamMaps(year) {
 
   return response.data;
 }
+
+// =========================================================
+// TEAM OPTIONS
+// =========================================================
 
 export async function getTeamTeams(year, map) {
   const response = await api.get("/api/team/options/teams", {
