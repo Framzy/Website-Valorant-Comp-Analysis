@@ -6,6 +6,7 @@ import "../css/responsive.css";
 import { state } from "./state.js";
 import { initAgents, resetAgents } from "./agents.js";
 import { closeError, hideResults } from "./ui.js";
+import { getAvailableYears, getAvailableMaps } from "./api.js";
 import { logger } from "./logger.js";
 
 function init() {
@@ -14,11 +15,8 @@ function init() {
   initModeTabs();
   logger.debug("Mode tabs initialized.");
 
-  initGeneralEvents();
-  logger.debug("General events initialized.");
-
-  initTeamEvents();
-  logger.debug("Team events initialized.");
+  initSharedInputEvents();
+  logger.debug("Shared input events initialized.");
 
   initErrorEvents();
   logger.debug("Error events initialized.");
@@ -26,12 +24,38 @@ function init() {
   initAgents();
   logger.debug("Agent system initialized.");
 
+  testSharedOptions();
+
+  updateModeUI(state.currentMode);
+
   logger.info("Application initialization completed.", {
     mode: state.currentMode,
     selectedAgents: state.selectedAgents,
     maxAgents: state.maxAgents,
   });
 }
+
+/* =========================================================
+   TEST SHARED OPTIONS API
+   ========================================================= */
+
+async function testSharedOptions() {
+  try {
+    const years = await getAvailableYears();
+
+    logger.info("Available years loaded successfully.", years);
+
+    const maps = await getAvailableMaps(2024);
+
+    logger.info("Available maps loaded successfully.", maps);
+  } catch (error) {
+    logger.error("Failed to load shared options.", error);
+  }
+}
+
+/* =========================================================
+   MODE
+   ========================================================= */
 
 function initModeTabs() {
   const tabs = document.querySelectorAll(".mode-tab");
@@ -51,7 +75,7 @@ function initModeTabs() {
       state.currentMode = mode;
 
       updateActiveTab(tab);
-      updateModePanels(mode);
+      updateModeUI(mode);
       hideModeResults();
 
       logger.info(`Mode changed to: ${mode}`);
@@ -67,18 +91,29 @@ function updateActiveTab(activeTab) {
   activeTab.classList.add("active");
 }
 
-function updateModePanels(mode) {
-  const generalPanel = document.getElementById("formGeneral");
-  const teamPanel = document.getElementById("formTeam");
+function updateModeUI(mode) {
+  const teamField = document.getElementById("teamField");
+  const teamSummary = document.getElementById("teamSummary");
+  const actionButton = document.getElementById("btnAction");
 
-  logger.debug("Updating mode panels.", {
+  const isTeamMode = mode === "team";
+
+  if (teamField) {
+    teamField.style.display = isTeamMode ? "" : "none";
+  }
+
+  if (teamSummary) {
+    teamSummary.style.display = isTeamMode ? "" : "none";
+  }
+
+  if (actionButton) {
+    actionButton.textContent = isTeamMode ? "Prediksi" : "Analisis";
+  }
+
+  logger.debug("Mode UI updated.", {
     mode,
-    generalPanelFound: Boolean(generalPanel),
-    teamPanelFound: Boolean(teamPanel),
+    teamVisible: isTeamMode,
   });
-
-  generalPanel?.classList.toggle("active", mode === "general");
-  teamPanel?.classList.toggle("active", mode === "team");
 }
 
 function hideModeResults() {
@@ -86,74 +121,233 @@ function hideModeResults() {
   hideResults("teamResult");
 }
 
-function initGeneralEvents() {
-  const resetButton = document.getElementById("btnResetGeneral");
+/* =========================================================
+   SHARED INPUT
+   ========================================================= */
 
-  logger.debug("General reset button.", {
-    found: Boolean(resetButton),
+function initSharedInputEvents() {
+  const year = document.getElementById("year");
+  const map = document.getElementById("map");
+  const team = document.getElementById("team");
+  const actionButton = document.getElementById("btnAction");
+  const resetButton = document.getElementById("btnReset");
+
+  logger.debug("Shared input elements.", {
+    yearFound: Boolean(year),
+    mapFound: Boolean(map),
+    teamFound: Boolean(team),
+    actionButtonFound: Boolean(actionButton),
+    resetButtonFound: Boolean(resetButton),
   });
 
-  resetButton?.addEventListener("click", () => {
-    logger.info("General reset clicked.");
+  year?.addEventListener("change", handleYearChange);
+  map?.addEventListener("change", handleMapChange);
 
-    resetAgents();
+  actionButton?.addEventListener("click", handleAction);
 
-    const year = document.getElementById("yearGeneral");
-    const map = document.getElementById("mapGeneral");
-
-    if (year) {
-      year.value = "";
-    }
-
-    if (map) {
-      map.value = "";
-    }
-
-    document.getElementById("namaTahunGeneral")?.replaceChildren("—");
-    document.getElementById("namaMapGeneral")?.replaceChildren("—");
-
-    hideResults("generalResult");
-  });
+  resetButton?.addEventListener("click", handleReset);
 }
 
-function initTeamEvents() {
-  const resetButton = document.getElementById("btnResetTeam");
+/* =========================================================
+   YEAR
+   ========================================================= */
 
-  logger.debug("Team reset button.", {
-    found: Boolean(resetButton),
-  });
+async function handleYearChange(event) {
+  const year = event.target.value;
 
-  resetButton?.addEventListener("click", () => {
-    logger.info("Team reset clicked.");
+  logger.debug("Year changed.", { year });
 
-    resetAgents();
+  resetMap();
+  resetTeam();
 
-    const year = document.getElementById("yearTeam");
-    const map = document.getElementById("mapTeam");
-    const team = document.getElementById("team");
+  updateYearSummary(year);
 
-    if (year) {
-      year.value = "";
-    }
+  if (!year) {
+    return;
+  }
 
-    if (map) {
-      map.value = "";
-    }
+  try {
+    const maps = await getAvailableMaps(year);
 
-    if (team) {
-      team.value = "";
-    }
+    logger.info("Maps loaded for selected year.", {
+      year,
+      maps,
+    });
 
-    map?.setAttribute("disabled", "");
-    team?.setAttribute("disabled", "");
-
-    document.getElementById("namaTahunTeam")?.replaceChildren("—");
-    document.getElementById("namaMapTeam")?.replaceChildren("—");
-    document.getElementById("namaTeam")?.replaceChildren("—");
-
-    hideResults("teamResult");
-  });
+    populateSelect(document.getElementById("map"), maps, "— Pilih Map —");
+  } catch (error) {
+    logger.error("Failed to load maps.", error);
+  }
 }
+
+/* =========================================================
+   MAP
+   ========================================================= */
+
+function handleMapChange(event) {
+  const map = event.target.value;
+
+  logger.debug("Map changed.", { map });
+
+  updateMapSummary(map);
+
+  if (state.currentMode === "team") {
+    resetTeam();
+
+    if (!map) {
+      return;
+    }
+
+    // Team options API akan dihubungkan pada tahap berikutnya.
+    logger.debug("Team mode map selected.", { map });
+  }
+}
+
+/* =========================================================
+   ACTION
+   ========================================================= */
+
+function handleAction() {
+  logger.info("Action button clicked.", {
+    mode: state.currentMode,
+  });
+
+  if (state.currentMode === "general") {
+    handleGeneralAction();
+    return;
+  }
+
+  handleTeamAction();
+}
+
+function handleGeneralAction() {
+  logger.info("General analysis requested.");
+
+  // Logic analyzeGeneral() akan dihubungkan setelah
+  // shared input controller selesai diuji.
+}
+
+function handleTeamAction() {
+  logger.info("Team prediction requested.");
+
+  // Logic predictTeam() akan dihubungkan setelah
+  // shared input controller selesai diuji.
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+function handleReset() {
+  logger.info("Shared reset clicked.");
+
+  resetAgents();
+
+  resetYear();
+  resetMap();
+  resetTeam();
+
+  resetSummaries();
+
+  hideModeResults();
+}
+
+/* =========================================================
+   SELECT HELPERS
+   ========================================================= */
+
+function populateSelect(select, items, placeholder) {
+  if (!select) {
+    return;
+  }
+
+  select.innerHTML = "";
+
+  const placeholderOption = document.createElement("option");
+
+  placeholderOption.value = "";
+  placeholderOption.textContent = placeholder;
+  placeholderOption.hidden = true;
+
+  select.appendChild(placeholderOption);
+
+  items.forEach((item) => {
+    const option = document.createElement("option");
+
+    option.value = item;
+    option.textContent = item;
+
+    select.appendChild(option);
+  });
+
+  select.value = "";
+
+  select.removeAttribute("disabled");
+}
+
+function resetYear() {
+  const year = document.getElementById("year");
+
+  if (!year) {
+    return;
+  }
+
+  year.value = "";
+}
+
+function resetMap() {
+  const map = document.getElementById("map");
+
+  if (!map) {
+    return;
+  }
+
+  map.innerHTML = '<option value="" hidden>— Pilih Map —</option>';
+  map.value = "";
+  map.setAttribute("disabled", "");
+}
+
+function resetTeam() {
+  const team = document.getElementById("team");
+
+  if (!team) {
+    return;
+  }
+
+  team.innerHTML = '<option value="" hidden>— Pilih Tim —</option>';
+  team.value = "";
+  team.setAttribute("disabled", "");
+}
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+function updateYearSummary(year) {
+  const element = document.getElementById("namaTahun");
+
+  if (element) {
+    element.textContent = year || "—";
+  }
+}
+
+function updateMapSummary(map) {
+  const element = document.getElementById("namaMap");
+
+  if (element) {
+    element.textContent = map || "—";
+  }
+}
+
+function resetSummaries() {
+  document.getElementById("namaTahun")?.replaceChildren("—");
+  document.getElementById("namaMap")?.replaceChildren("—");
+  document.getElementById("namaTeam")?.replaceChildren("—");
+}
+
+/* =========================================================
+   ERROR
+   ========================================================= */
 
 function initErrorEvents() {
   const closeButton = document.getElementById("errorCloseBtn");
@@ -164,5 +358,9 @@ function initErrorEvents() {
 
   closeButton?.addEventListener("click", closeError);
 }
+
+/* =========================================================
+   START APPLICATION
+   ========================================================= */
 
 document.addEventListener("DOMContentLoaded", init);
