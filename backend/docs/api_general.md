@@ -30,7 +30,22 @@ application/json
 
 ---
 
-## 3. Request
+## 3. Shared Options
+
+Year dan Map digunakan oleh General Analysis dan Team Prediction.
+
+Endpoint bersama:
+
+```http
+GET /api/options/years
+GET /api/options/maps?year=2025
+```
+
+Options tersebut berasal dari ketersediaan bersama dataset General V2 dan Team V2.
+
+---
+
+## 4. Request
 
 ```json
 {
@@ -63,7 +78,7 @@ application/json
 
 ---
 
-## 4. Processing Flow
+## 5. Processing Flow
 
 ```text
 Request
@@ -85,7 +100,7 @@ Found ────────────────→ Historical Result
 
 ---
 
-## 5. Playstyle
+## 6. Playstyle
 
 Playstyle ditentukan berdasarkan role pattern.
 
@@ -101,7 +116,7 @@ Playstyle yang digunakan:
 
 ---
 
-## 6. Recommendation
+## 7. Recommendation
 
 Ranking recommendation:
 
@@ -112,7 +127,7 @@ Winrate menjadi informasi pendukung, bukan primary ranking criterion.
 
 ---
 
-## 7. Fallback
+## 8. Fallback
 
 Jika exact composition tidak ditemukan:
 
@@ -130,7 +145,7 @@ Jika playstyle `UNCLASSIFIED`, level `MAP + YEAR + PLAYSTYLE` dilewati.
 
 ---
 
-## 8. Response
+## 9. Response
 
 Contoh struktur:
 
@@ -174,11 +189,11 @@ Contoh struktur:
 }
 ```
 
-Nilai prediction/statistik di atas hanya contoh struktur response.
+Nilai statistik di atas hanya contoh struktur response.
 
 ---
 
-## 9. Error
+## 10. Error
 
 ### 400 Bad Request
 
@@ -209,10 +224,9 @@ Untuk unexpected server exception.
 
 ---
 
-## 10. Postman Testing
+## 11. API Test Checklist
 
 ### Positive
-
 - [ ] Exact composition ditemukan.
 - [ ] Exact composition tidak ditemukan.
 - [ ] Fallback `MAP_YEAR_PLAYSTYLE`.
@@ -222,7 +236,6 @@ Untuk unexpected server exception.
 - [ ] `UNCLASSIFIED` playstyle.
 
 ### Negative
-
 - [ ] Missing map.
 - [ ] Missing year.
 - [ ] Missing agents.

@@ -9,7 +9,9 @@ Team + Map + Year + Agents
 ```
 
 Fungsi utama:
-- Menyediakan options Year, Map, dan Team.
+
+- Menggunakan shared Year dan Map options.
+- Menyediakan Team options berdasarkan Year + Map.
 - Mencari exact historical composition.
 - Menangani unseen composition.
 - Membentuk 116 feature.
@@ -20,7 +22,50 @@ Backend tidak melakukan training.
 
 ---
 
-# 2. Team Options API
+# 2. Shared Options API
+
+Year dan Map digunakan bersama oleh General Analysis dan Team Prediction.
+
+## 2.1 Available Years
+
+```http
+GET /api/options/years
+```
+
+Response:
+
+```json
+{
+  "years": [2024, 2025, 2026]
+}
+```
+
+## 2.2 Available Maps
+
+```http
+GET /api/options/maps?year=2025
+```
+
+Query:
+
+| Parameter | Type    | Required |
+| --------- | ------- | -------: |
+| `year`    | integer |      Yes |
+
+Response:
+
+```json
+{
+  "year": 2025,
+  "maps": ["Abyss", "Ascent"]
+}
+```
+
+Options berasal dari ketersediaan bersama dataset General V2 dan Team V2.
+
+---
+
+# 3. Team Options API
 
 Options digunakan frontend dengan pola:
 
@@ -32,49 +77,7 @@ Map
 Team
 ```
 
-## 2.1 Available Years
-
-```http
-GET /api/team/options/years
-```
-
-Response:
-
-```json
-{
-  "years": [2024, 2025, 2026]
-}
-```
-
----
-
-## 2.2 Available Maps
-
-```http
-GET /api/team/options/maps?year=2025
-```
-
-Query:
-
-| Parameter | Type | Required |
-|---|---|---:|
-| `year` | integer | Yes |
-
-Response:
-
-```json
-{
-  "year": 2025,
-  "maps": [
-    "Abyss",
-    "Ascent"
-  ]
-}
-```
-
----
-
-## 2.3 Available Teams
+## 3.1 Available Teams
 
 ```http
 GET /api/team/options/teams?year=2025&map=Abyss
@@ -82,10 +85,10 @@ GET /api/team/options/teams?year=2025&map=Abyss
 
 Query:
 
-| Parameter | Type | Required |
-|---|---|---:|
-| `year` | integer | Yes |
-| `map` | string | Yes |
+| Parameter | Type    | Required |
+| --------- | ------- | -------: |
+| `year`    | integer |      Yes |
+| `map`     | string  |      Yes |
 
 Response:
 
@@ -93,18 +96,15 @@ Response:
 {
   "year": 2025,
   "map": "Abyss",
-  "teams": [
-    "Fnatic",
-    "Gen.G"
-  ]
+  "teams": ["Fnatic", "Gen.G"]
 }
 ```
 
-Options berasal dari Team V2 dataset yang sudah di-load oleh service.
+Options Team berasal dari Team V2 dataset.
 
 ---
 
-# 3. Team Prediction API
+# 4. Team Prediction API
 
 ## Endpoint
 
@@ -120,35 +120,29 @@ application/json
 
 ---
 
-## 4. Request
+# 5. Request
 
 ```json
 {
   "team": "Fnatic",
   "map": "Abyss",
   "year": 2025,
-  "agents": [
-    "jett",
-    "sova",
-    "omen",
-    "cypher",
-    "kayo"
-  ]
+  "agents": ["jett", "sova", "omen", "cypher", "kayo"]
 }
 ```
 
 ### Fields
 
-| Field | Type | Required |
-|---|---|---:|
-| `team` | string | Yes |
-| `map` | string | Yes |
-| `year` | integer | Yes |
-| `agents` | array[string] | Yes |
+| Field    | Type          | Required |
+| -------- | ------------- | -------: |
+| `team`   | string        |      Yes |
+| `map`    | string        |      Yes |
+| `year`   | integer       |      Yes |
+| `agents` | array[string] |      Yes |
 
 ---
 
-# 5. Validation
+# 6. Validation
 
 Service memastikan:
 
@@ -162,7 +156,7 @@ Service memastikan:
 
 ---
 
-# 6. Prediction Flow
+# 7. Prediction Flow
 
 ## Historical Composition
 
@@ -204,7 +198,7 @@ Prediction
 
 ---
 
-# 7. Feature Contract
+# 8. Feature Contract
 
 Team Prediction V2 menggunakan tepat:
 
@@ -212,16 +206,16 @@ Team Prediction V2 menggunakan tepat:
 116 features
 ```
 
-| Group | Count |
-|---|---:|
-| Team | 57 |
-| Map | 12 |
-| Year | 3 |
-| Agent | 29 |
-| Role Count | 4 |
-| Role Pattern | 8 |
-| Numeric | 3 |
-| **Total** | **116** |
+| Group        |   Count |
+| ------------ | ------: |
+| Team         |      57 |
+| Map          |      12 |
+| Year         |       3 |
+| Agent        |      29 |
+| Role Count   |       4 |
+| Role Pattern |       8 |
+| Numeric      |       3 |
+| **Total**    | **116** |
 
 Backend harus memastikan:
 
@@ -233,7 +227,7 @@ encoded feature count = 116
 
 ---
 
-# 8. Response
+# 9. Response
 
 ```json
 {
@@ -241,13 +235,7 @@ encoded feature count = 116
     "team": "Fnatic",
     "map": "Abyss",
     "year": 2025,
-    "agents": [
-      "jett",
-      "sova",
-      "omen",
-      "cypher",
-      "kayo"
-    ]
+    "agents": ["jett", "sova", "omen", "cypher", "kayo"]
   },
   "prediction": {
     "winrate": 0.61,
@@ -275,11 +263,12 @@ Nilai prediction di atas hanya contoh struktur response.
 
 ---
 
-# 9. Error
+# 10. Error
 
 ### 400 Bad Request
 
 Untuk:
+
 - missing field,
 - invalid year,
 - invalid map,
@@ -307,13 +296,20 @@ Untuk unexpected server exception.
 
 ---
 
-# 10. Postman Testing
+# 11. API Test Checklist
 
-### Options
+### Shared Options
 
-- [ ] GET years.
-- [ ] GET maps berdasarkan year.
+- [ ] GET shared years.
+- [ ] GET shared maps berdasarkan year.
+- [ ] Missing year.
+- [ ] Invalid year.
+
+### Team Options
+
 - [ ] GET teams berdasarkan year + map.
+- [ ] Missing year.
+- [ ] Missing map.
 
 ### Prediction
 

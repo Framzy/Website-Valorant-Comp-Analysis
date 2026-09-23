@@ -24,12 +24,13 @@ Frontend / Postman
 +-----------+-----------+
             |
             v
-+-----------------------+
-|       Services        |
-|                       |
-| GeneralAnalysisService|
-| TeamPredictionService |
-+-----------+-----------+
++-----------------------------+
+|          Services           |
+|                             |
+| SharedOptionsService        |
+| GeneralAnalysisService      |
+| TeamPredictionService       |
++-----------+-----------------+
             |
             +----------------------+
             |                      |
@@ -71,6 +72,7 @@ backend/
 │       └── metadata.json
 │
 └── services/
+    ├── shared_options_service.py
     ├── general_analysis_service.py
     └── team_prediction_service.py
 ```
@@ -91,6 +93,12 @@ Bertanggung jawab untuk:
 - memetakan error ke HTTP status.
 
 `app.py` tidak melakukan business logic.
+
+## `SharedOptionsService`
+
+Bertanggung jawab menyediakan Year dan Map yang tersedia bersama untuk General Analysis dan Team Prediction.
+
+Service menggunakan common availability dari kedua dataset.
 
 ## `GeneralAnalysisService`
 
@@ -135,6 +143,11 @@ Saat aplikasi dimulai:
 
 ```text
 Application Start
+       |
+       +--> SharedOptionsService()
+       |       |
+       |       +--> Load General Year/Map data
+       |       +--> Load Team Year/Map data
        |
        +--> GeneralAnalysisService()
        |       |
@@ -200,17 +213,22 @@ Detail internal tidak diekspos ke client.
 
 # 7. Route Convention
 
-General:
+## Shared Options
+
+```http
+GET /api/options/years
+GET /api/options/maps
+```
+
+## General
 
 ```http
 POST /api/general/analyze
 ```
 
-Team:
+## Team
 
 ```http
-GET  /api/team/options/years
-GET  /api/team/options/maps
 GET  /api/team/options/teams
 POST /api/team/predict
 ```
@@ -220,6 +238,8 @@ Semua API menggunakan prefix:
 ```text
 /api
 ```
+
+Year dan Map tidak lagi memiliki endpoint khusus Team karena digunakan oleh kedua module.
 
 ---
 
@@ -285,24 +305,26 @@ Production backend tidak menjalankan:
 
 ---
 
-# 11. Postman Strategy
+# 11. API Testing Strategy
 
-Postman digunakan sebagai integration test untuk HTTP layer.
+API testing digunakan sebagai integration test untuk HTTP layer.
 
 Urutan testing:
 
 ```text
 1. Start Flask
        ↓
-2. Test General endpoint
+2. Test shared options
        ↓
-3. Test Team options
+3. Test General endpoint
        ↓
-4. Test Team prediction
+4. Test Team options
        ↓
-5. Test negative cases
+5. Test Team prediction
        ↓
-6. Connect frontend
+6. Test negative cases
+       ↓
+7. Connect frontend
 ```
 
 Testing harus mencakup success dan error cases.
@@ -315,12 +337,14 @@ Testing harus mencakup success dan error cases.
 
 - [x] General service selesai.
 - [x] Team service selesai.
+- [x] Shared options service selesai.
 - [x] Backend tidak bergantung pada `training_v2`.
 - [x] Resource statis di-load sekali.
 
 ## API
 
 - [ ] `app.py` selesai.
+- [ ] Shared options endpoint selesai.
 - [ ] General endpoint selesai.
 - [ ] Team options endpoint selesai.
 - [ ] Team prediction endpoint selesai.
@@ -334,5 +358,6 @@ Testing harus mencakup success dan error cases.
 
 ## Integration
 
-- [ ] Postman testing selesai.
+- [ ] HTTP test selesai.
+- [ ] Frontend API client diperbarui.
 - [ ] Frontend terhubung kembali.
