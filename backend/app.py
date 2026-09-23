@@ -2,6 +2,7 @@ from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from backend.services.shared_options_service import SharedOptionsService
 from backend.services.general_analysis_service import GeneralAnalysisService
 from backend.services.team_prediction_service import TeamPredictionService
 
@@ -24,8 +25,50 @@ CORS(app)
 # SERVICES
 # ============================================================
 
+option_service = SharedOptionsService()
 general_service = GeneralAnalysisService()
 team_service = TeamPredictionService()
+
+
+# ============================================================
+# SHARED OPTION API
+# ============================================================
+
+@app.get("/api/options/years")
+def get_available_years():
+    """Return years shared by General V2 and Team V2."""
+    try:
+        years = option_service.get_available_years()
+        return jsonify({"years": years}), 200
+
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    except Exception:
+        return jsonify({"error": "Internal server error."}), 500
+
+
+@app.get("/api/options/maps")
+def get_available_maps():
+    """Return maps shared by General V2 and Team V2 for a year."""
+    try:
+        year = request.args.get("year")
+
+        if year is None:
+            return jsonify({"error": "Year is required."}), 400
+
+        maps = option_service.get_available_maps(year)
+
+        return jsonify({
+            "year": int(year),
+            "maps": maps,
+        }), 200
+
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    except Exception:
+        return jsonify({"error": "Internal server error."}), 500
 
 
 # ============================================================
@@ -73,45 +116,8 @@ def analyze_general():
 
 
 # ============================================================
-# TEAM OPTIONS API
+# TEAM-SPECIFIC OPTIONS API
 # ============================================================
-
-@app.get("/api/team/options/years")
-def get_team_years():
-    """Return available Team V2 years."""
-    try:
-        years = team_service.get_available_years()
-        return jsonify({"years": years}), 200
-
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
-
-    except Exception:
-        return jsonify({"error": "Internal server error."}), 500
-
-
-@app.get("/api/team/options/maps")
-def get_team_maps():
-    """Return available Team V2 maps for a year."""
-    try:
-        year = request.args.get("year")
-
-        if year is None:
-            return jsonify({"error": "Year is required."}), 400
-
-        maps = team_service.get_available_maps(year)
-
-        return jsonify({
-            "year": int(year),
-            "maps": maps,
-        }), 200
-
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
-
-    except Exception:
-        return jsonify({"error": "Internal server error."}), 500
-
 
 @app.get("/api/team/options/teams")
 def get_team_teams():
