@@ -131,16 +131,10 @@ function updateSelectedAgentSummary() {
     ? state.selectedAgents.map(capitalize).join(", ")
     : "—";
 
-  const general = document.getElementById("namaAgentGeneral");
+  const summary = document.getElementById("namaAgent");
 
-  if (general) {
-    general.textContent = text;
-  }
-
-  const team = document.getElementById("namaAgentTeam");
-
-  if (team) {
-    team.textContent = text;
+  if (summary) {
+    summary.textContent = text;
   }
 }
 
