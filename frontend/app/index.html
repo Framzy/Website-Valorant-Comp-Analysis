@@ -12,8 +12,6 @@
 
     <link rel="icon" type="image/png" href="/src/assets/logo_valorant.png" />
 
-    <link rel="stylesheet" href="/src/style.css" />
-
     <title>Valorant Agent Comp Analyze</title>
   </head>
 
@@ -106,19 +104,14 @@
         ==================================================== -->
         <div class="bottomSection">
           <!-- =================================================
-               GENERAL ANALYSIS FORM
+               SHARED INPUT
           ================================================== -->
-          <div class="bottomForm mode-panel active" id="formGeneral">
+          <div class="bottomForm" id="inputPanel">
             <!-- Year -->
             <div class="Year">
               <p>Pilih Tahun</p>
 
-              <select
-                title="Year Option"
-                name="Year_Option_General"
-                id="yearGeneral"
-                required
-              >
+              <select title="Year Option" name="Year_Option" id="year" required>
                 <option value="" hidden>— Pilih Tahun —</option>
               </select>
             </div>
@@ -129,52 +122,8 @@
 
               <select
                 title="Map Option"
-                name="Map_Option_General"
-                id="mapGeneral"
-                required
-              >
-                <option value="" hidden>— Pilih Map —</option>
-              </select>
-            </div>
-
-            <!-- Buttons -->
-            <div class="button-group">
-              <button type="button" class="btn-predict" id="btnAnalyzeGeneral">
-                Analisis
-              </button>
-
-              <button type="button" class="btn-reset" id="btnResetGeneral">
-                Reset
-              </button>
-            </div>
-          </div>
-
-          <!-- =================================================
-               TEAM PREDICTION FORM
-          ================================================== -->
-          <div class="bottomForm mode-panel" id="formTeam">
-            <!-- Year -->
-            <div class="Year">
-              <p>Pilih Tahun</p>
-
-              <select
-                title="Year Option"
-                name="Year_Option_Team"
-                id="yearTeam"
-                required
-              >
-                <option value="" hidden>— Pilih Tahun —</option>
-              </select>
-            </div>
-
-            <!-- Map -->
-            <div class="Map">
-              <p>Pilih Map</p>
-
-              <select
-                title="Map Option"
-                name="Map_Option_Team"
-                id="mapTeam"
+                name="Map_Option"
+                id="map"
                 required
                 disabled
               >
@@ -182,8 +131,9 @@
               </select>
             </div>
 
-            <!-- Team -->
-            <div class="Team">
+            <!-- Team
+                 Hanya digunakan pada mode Pro Team -->
+            <div class="Team" id="teamField">
               <p>Pilih Team</p>
 
               <select
@@ -199,65 +149,47 @@
 
             <!-- Buttons -->
             <div class="button-group">
-              <button type="button" class="btn-predict" id="btnPredictTeam">
-                Prediksi
+              <button type="button" class="btn-predict" id="btnAction">
+                Analisis
               </button>
 
-              <button type="button" class="btn-reset" id="btnResetTeam">
+              <button type="button" class="btn-reset" id="btnReset">
                 Reset
               </button>
             </div>
           </div>
 
           <!-- =================================================
-               GENERAL INPUT SUMMARY
+               SHARED INPUT SUMMARY
           ================================================== -->
-          <div class="inputPick mode-panel active" id="pickGeneral">
+          <div class="inputPick" id="inputSummary">
+            <!-- Year -->
             <div class="yearPick">
               <p>Tahun Dipilih</p>
 
-              <p id="namaTahunGeneral">—</p>
+              <p id="namaTahun">—</p>
             </div>
 
+            <!-- Map -->
             <div class="mapPick">
               <p>Map Dipilih</p>
 
-              <p id="namaMapGeneral">—</p>
+              <p id="namaMap">—</p>
             </div>
 
-            <div class="agentPick">
-              <p>Agent Dipilih</p>
-
-              <p id="namaAgentGeneral">—</p>
-            </div>
-          </div>
-
-          <!-- =================================================
-               TEAM INPUT SUMMARY
-          ================================================== -->
-          <div class="inputPick mode-panel" id="pickTeam">
-            <div class="yearPick">
-              <p>Tahun Dipilih</p>
-
-              <p id="namaTahunTeam">—</p>
-            </div>
-
-            <div class="teamPick">
+            <!-- Team
+                 Hanya ditampilkan pada mode Pro Team -->
+            <div class="teamPick" id="teamSummary">
               <p>Team Dipilih</p>
 
               <p id="namaTeam">—</p>
             </div>
 
-            <div class="mapPick">
-              <p>Map Dipilih</p>
-
-              <p id="namaMapTeam">—</p>
-            </div>
-
+            <!-- Agents -->
             <div class="agentPick">
               <p>Agent Dipilih</p>
 
-              <p id="namaAgentTeam">—</p>
+              <p id="namaAgent">—</p>
             </div>
           </div>
 
