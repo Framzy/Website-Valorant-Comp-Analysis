@@ -1,3 +1,72 @@
+### ============================================================
+### VALORANT PREDICTOR V2 - API TESTS
+### Base URL: http://localhost:5000
+### ============================================================
+
+
+### =========================================================
+### SHARED OPTIONS - YEARS + MAPS
+### =========================================================
+
+### 1. Get available years
+GET http://localhost:5000/api/options/years
+Accept: application/json
+
+# expected
+# {
+#     "years": [
+#         2024,
+#         2025,
+#         2026
+#     ]
+# }
+
+
+###
+
+### 2. Get maps - valid year
+GET http://localhost:5000/api/options/maps?year=2024
+Accept: application/json
+
+# expected
+# {
+#   "maps": [
+#     "Abyss",
+#     "Ascent",
+#     "Bind",
+#     "Breeze",
+#     "Haven",
+#     "Icebox",
+#     "Lotus",
+#     "Split",
+#     "Sunset"
+#   ],
+#   "year": 2024
+# }
+
+###
+
+### 3. Get maps - missing year
+GET http://localhost:5000/api/options/maps
+Accept: application/json
+
+# expected
+# {
+#   "error": "Year is required."
+# }
+
+###
+
+### 4. Get maps - invalid year
+GET http://localhost:5000/api/options/maps?year=abc
+Accept: application/json
+
+# expected
+# {
+#   "error": "Year must be an integer."
+# }
+
+
 ### =========================================================
 ### GENERAL ANALYSIS
 ### =========================================================
@@ -253,72 +322,10 @@ Accept: application/json
 
 
 ### =========================================================
-### TEAM OPTIONS - YEARS
-### =========================================================
-
-### 5. Get available years
-GET http://localhost:5000/api/team/options/years
-Accept: application/json
-
-# expected
-# {
-#     "years": [
-#         2024,
-#         2025,
-#         2026
-#     ]
-# }
-
-
-###
-
-### 6. Get maps - valid year
-GET http://localhost:5000/api/team/options/maps?year=2024
-Accept: application/json
-
-# expected
-# {
-#   "maps": [
-#     "Abyss",
-#     "Ascent",
-#     "Bind",
-#     "Breeze",
-#     "Haven",
-#     "Icebox",
-#     "Lotus",
-#     "Split",
-#     "Sunset"
-#   ],
-#   "year": 2024
-# }
-
-###
-
-### 7. Get maps - missing year
-GET http://localhost:5000/api/team/options/maps
-Accept: application/json
-
-# expected
-# {
-#   "error": "Year is required."
-# }
-
-###
-
-### 8. Get maps - invalid year
-GET http://localhost:5000/api/team/options/maps?year=abc
-Accept: application/json
-
-# expected
-# {
-#   "error": "Year must be an integer."
-# }
-
-### =========================================================
 ### TEAM OPTIONS - TEAMS
 ### =========================================================
 
-### 9. Get teams - valid
+### 1. Get teams - valid
 GET http://localhost:5000/api/team/options/teams?year=2024&map=Abyss
 Accept: application/json
 
@@ -349,7 +356,7 @@ Accept: application/json
 
 ###
 
-### 10. Get teams - missing year
+### 2. Get teams - missing year
 GET http://localhost:5000/api/team/options/teams?map=Abyss
 Accept: application/json
 
@@ -360,7 +367,7 @@ Accept: application/json
 
 ###
 
-### 11. Get teams - missing map
+### 3. Get teams - missing map
 GET http://localhost:5000/api/team/options/teams?year=2024
 Accept: application/json
 
@@ -371,7 +378,7 @@ Accept: application/json
 
 ###
 
-### 12. Get teams - invalid year
+### 4. Get teams - invalid year
 GET http://localhost:5000/api/team/options/teams?year=abc&map=Abyss
 Accept: application/json
 
@@ -381,7 +388,7 @@ Accept: application/json
 # }
 ###
 
-### 13. Get teams - unknown map
+### 5. Get teams - unknown map
 GET http://localhost:5000/api/team/options/teams?year=2024&map=UnknownMap
 Accept: application/json
 
@@ -394,7 +401,7 @@ Accept: application/json
 ### TEAM PREDICTION
 ### =========================================================
 
-### 14. Team Prediction - valid
+### 6. Team Prediction - valid
 POST http://localhost:5000/api/team/predict
 Content-Type: application/json
 Accept: application/json
@@ -450,7 +457,7 @@ Accept: application/json
 
 ###
 
-### 15. Team Prediction - missing field
+### 7. Team Prediction - missing field
 POST http://localhost:5000/api/team/predict
 Content-Type: application/json
 Accept: application/json
@@ -469,7 +476,7 @@ Accept: application/json
 
 ###
 
-### 16. Team Prediction - invalid agents structure
+### 8. Team Prediction - invalid agents structure
 POST http://localhost:5000/api/team/predict
 Content-Type: application/json
 Accept: application/json
@@ -488,7 +495,7 @@ Accept: application/json
 
 ###
 
-### 17. Team Prediction - unknown team
+### 9. Team Prediction - unknown team
 POST http://localhost:5000/api/team/predict
 Content-Type: application/json
 Accept: application/json
@@ -513,7 +520,7 @@ Accept: application/json
 
 ###
 
-### 18. Team Prediction - invalid map/year combination
+### 10. Team Prediction - invalid map/year combination
 POST http://localhost:5000/api/team/predict
 Content-Type: application/json
 Accept: application/json
@@ -538,7 +545,7 @@ Accept: application/json
 
 ###
 
-### 19. Team Prediction - unknown agent
+### 11. Team Prediction - unknown agent
 POST http://localhost:5000/api/team/predict
 Content-Type: application/json
 Accept: application/json
@@ -565,7 +572,7 @@ Accept: application/json
 ### METHOD TESTING
 ### =========================================================
 
-### 20. Wrong method - General Analysis
+### 1. Wrong method - General Analysis
 GET http://localhost:5000/api/general/analyze
 Accept: application/json
 
@@ -579,7 +586,7 @@ Accept: application/json
 
 ###
 
-### 21. Wrong method - Team Prediction
+### 2. Wrong method - Team Prediction
 GET http://localhost:5000/api/team/predict
 Accept: application/json
 
@@ -593,7 +600,7 @@ Accept: application/json
 
 ###
 
-### 22. Unknown endpoint
+### 3. Unknown endpoint
 GET http://localhost:5000/api/unknown
 Accept: application/json
 
@@ -604,3 +611,15 @@ Accept: application/json
 # <h1>Not Found</h1>
 # <p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>
 
+### ------------------------------------------------------------
+### EXPECTED HTTP STATUS
+### ------------------------------------------------------------
+# Shared years                         -> 200
+# Shared maps                         -> 200
+# Missing/invalid query parameter     -> 400
+# Team options                        -> 200
+# General valid request               -> 200
+# General invalid request             -> 400
+# Team prediction valid request       -> 200
+# Team prediction invalid request     -> 400
+# Unexpected server exception         -> 500
