@@ -258,8 +258,10 @@ class TeamPredictionService:
         year: int,
         map_name: str,
     ) -> list[str]:
-        """
-        Return teams available for the selected year and map.
+        """Return teams whose Team + Map + Year context has >= 3 maps.
+
+        Year and Map are supplied by the shared options layer; this method
+        applies the Team-specific eligibility rule only.
         """
         try:
             normalized_year = int(year)
@@ -269,17 +271,26 @@ class TeamPredictionService:
         if not isinstance(map_name, str) or not map_name.strip():
             raise ValueError("Map is required.")
 
-        result = self.dataset[
+        normalized_map = map_name.strip().lower()
+        context = self.dataset[
             (self.dataset["Year"] == normalized_year)
-            & (self.dataset["Map"].str.lower() == map_name.strip().lower())
-        ]["Team"].dropna().unique()
+            & (self.dataset["Map"].str.lower() == normalized_map)
+        ]
 
-        if len(result) == 0:
+        if context.empty:
             raise ValueError(
                 f"No Team V2 data for {map_name} / {normalized_year}."
             )
 
-        return sorted(str(team) for team in result)
+        context_played = context.groupby("Team")["Total Maps Played"].sum()
+        eligible = context_played[context_played >= 3]
+
+        if eligible.empty:
+            raise ValueError(
+                f"No eligible teams for {map_name} / {normalized_year}."
+            )
+
+        return sorted(str(team) for team in eligible.index if pd.notna(team))
 
     def predict(
         self,
