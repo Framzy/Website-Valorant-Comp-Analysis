@@ -65,7 +65,7 @@ api.interceptors.response.use(
 export async function getAvailableYears() {
   const response = await api.get("/api/options/years");
 
-  return response.data;
+  return response.data.years;
 }
 
 export async function getAvailableMaps(year) {
@@ -75,7 +75,7 @@ export async function getAvailableMaps(year) {
     },
   });
 
-  return response.data;
+  return response.data.maps;
 }
 
 // =========================================================
@@ -90,7 +90,7 @@ export async function getTeamTeams(year, map) {
     },
   });
 
-  return response.data;
+  return response.data.teams;
 }
 
 // =========================================================

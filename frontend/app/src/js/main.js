@@ -4,9 +4,24 @@ import "../css/results.css";
 import "../css/responsive.css";
 
 import { state } from "./state.js";
-import { initAgents, resetAgents } from "./agents.js";
-import { closeError, hideResults } from "./ui.js";
-import { getAvailableYears, getAvailableMaps } from "./api.js";
+
+import {
+  initAgents,
+  resetAgents,
+  getSelectedAgents,
+  isAgentSelectionComplete,
+} from "./agents.js";
+
+import { closeError, hideResults, showError } from "./ui.js";
+
+import {
+  getAvailableYears,
+  getAvailableMaps,
+  getTeamTeams,
+  analyzeGeneral,
+  predictTeam,
+} from "./api.js";
+
 import { logger } from "./logger.js";
 
 function init() {
@@ -24,7 +39,7 @@ function init() {
   initAgents();
   logger.debug("Agent system initialized.");
 
-  testSharedOptions();
+  loadAvailableYears();
 
   updateModeUI(state.currentMode);
 
@@ -39,17 +54,15 @@ function init() {
    TEST SHARED OPTIONS API
    ========================================================= */
 
-async function testSharedOptions() {
+async function loadAvailableYears() {
   try {
     const years = await getAvailableYears();
 
-    logger.info("Available years loaded successfully.", years);
+    logger.info("Available years loaded.", years);
 
-    const maps = await getAvailableMaps(2024);
-
-    logger.info("Available maps loaded successfully.", maps);
+    populateSelect(document.getElementById("year"), years, "— Pilih Tahun —");
   } catch (error) {
-    logger.error("Failed to load shared options.", error);
+    logger.error("Failed to load available years.", error);
   }
 }
 
@@ -77,6 +90,7 @@ function initModeTabs() {
       updateActiveTab(tab);
       updateModeUI(mode);
       hideModeResults();
+      handleReset();
 
       logger.info(`Mode changed to: ${mode}`);
     });
@@ -142,9 +156,9 @@ function initSharedInputEvents() {
 
   year?.addEventListener("change", handleYearChange);
   map?.addEventListener("change", handleMapChange);
+  team?.addEventListener("change", handleTeamChange);
 
   actionButton?.addEventListener("click", handleAction);
-
   resetButton?.addEventListener("click", handleReset);
 }
 
@@ -161,6 +175,8 @@ async function handleYearChange(event) {
   resetTeam();
 
   updateYearSummary(year);
+  updateMapSummary("");
+  updateTeamSummary("");
 
   if (!year) {
     return;
@@ -184,22 +200,37 @@ async function handleYearChange(event) {
    MAP
    ========================================================= */
 
-function handleMapChange(event) {
+async function handleMapChange(event) {
   const map = event.target.value;
+  const year = document.getElementById("year")?.value;
 
-  logger.debug("Map changed.", { map });
+  logger.debug("Map changed.", {
+    year,
+    map,
+    mode: state.currentMode,
+  });
 
   updateMapSummary(map);
 
-  if (state.currentMode === "team") {
-    resetTeam();
+  resetTeam();
+  updateTeamSummary("");
 
-    if (!map) {
-      return;
-    }
+  if (state.currentMode !== "team" || !year || !map) {
+    return;
+  }
 
-    // Team options API akan dihubungkan pada tahap berikutnya.
-    logger.debug("Team mode map selected.", { map });
+  try {
+    const teams = await getTeamTeams(year, map);
+
+    logger.info("Teams loaded.", {
+      year,
+      map,
+      teams,
+    });
+
+    populateSelect(document.getElementById("team"), teams, "— Pilih Tim —");
+  } catch (error) {
+    logger.error("Failed to load teams.", error);
   }
 }
 
@@ -220,18 +251,83 @@ function handleAction() {
   handleTeamAction();
 }
 
-function handleGeneralAction() {
-  logger.info("General analysis requested.");
+function handleTeamChange(event) {
+  const team = event.target.value;
 
-  // Logic analyzeGeneral() akan dihubungkan setelah
-  // shared input controller selesai diuji.
+  logger.debug("Team changed.", { team });
+
+  updateTeamSummary(team);
 }
 
-function handleTeamAction() {
+async function handleGeneralAction() {
+  logger.info("General analysis requested.");
+
+  const validation = validateCommonInputs();
+
+  if (!validation.valid) {
+    logger.warn("General validation failed.", validation.message);
+    showError(validation.message);
+    return;
+  }
+
+  const payload = {
+    map: validation.map,
+    year: Number(validation.year),
+    agents: validation.agents,
+  };
+
+  logger.info("Sending general analysis request.", payload);
+
+  try {
+    const result = await analyzeGeneral(payload);
+
+    logger.info("General analysis completed.", result);
+
+    console.log("GENERAL API RESPONSE:", result);
+  } catch (error) {
+    logger.error("General analysis failed.", error);
+
+    showError(
+      error.response?.data?.message ||
+        "Gagal melakukan analisis. Silakan coba lagi.",
+    );
+  }
+}
+
+async function handleTeamAction() {
   logger.info("Team prediction requested.");
 
-  // Logic predictTeam() akan dihubungkan setelah
-  // shared input controller selesai diuji.
+  const validation = validateTeamInputs();
+
+  if (!validation.valid) {
+    logger.warn("Team validation failed.", validation.message);
+    showError(validation.message);
+    return;
+  }
+
+  const payload = {
+    team: validation.team,
+    map: validation.map,
+    year: Number(validation.year),
+    agents: validation.agents,
+  };
+
+  logger.info("Sending team prediction request.", payload);
+
+  try {
+    const result = await predictTeam(payload);
+
+    logger.info("Team prediction completed.", result);
+
+    console.log("TEAM API RESPONSE:", result);
+  } catch (error) {
+    logger.error("Team prediction failed.", error);
+
+    showError(
+      error.response?.data?.message ||
+        "Gagal melakukan prediksi. Silakan coba lagi.",
+    );
+  }
 }
 
 /* =========================================================
@@ -339,10 +435,77 @@ function updateMapSummary(map) {
   }
 }
 
+function updateTeamSummary(team) {
+  const element = document.getElementById("namaTeam");
+
+  if (element) {
+    element.textContent = team || "—";
+  }
+}
+
 function resetSummaries() {
   document.getElementById("namaTahun")?.replaceChildren("—");
   document.getElementById("namaMap")?.replaceChildren("—");
   document.getElementById("namaTeam")?.replaceChildren("—");
+}
+
+/* =========================================================
+   VALIDATION
+   ========================================================= */
+
+function validateCommonInputs() {
+  const year = document.getElementById("year")?.value;
+  const map = document.getElementById("map")?.value;
+
+  if (!year) {
+    return {
+      valid: false,
+      message: "Silakan pilih tahun terlebih dahulu.",
+    };
+  }
+
+  if (!map) {
+    return {
+      valid: false,
+      message: "Silakan pilih map terlebih dahulu.",
+    };
+  }
+
+  if (!isAgentSelectionComplete()) {
+    return {
+      valid: false,
+      message: "Silakan pilih 5 agent terlebih dahulu.",
+    };
+  }
+
+  return {
+    valid: true,
+    year,
+    map,
+    agents: getSelectedAgents(),
+  };
+}
+
+function validateTeamInputs() {
+  const common = validateCommonInputs();
+
+  if (!common.valid) {
+    return common;
+  }
+
+  const team = document.getElementById("team")?.value;
+
+  if (!team) {
+    return {
+      valid: false,
+      message: "Silakan pilih team terlebih dahulu.",
+    };
+  }
+
+  return {
+    ...common,
+    team,
+  };
 }
 
 /* =========================================================
