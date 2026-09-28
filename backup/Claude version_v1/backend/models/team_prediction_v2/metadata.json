@@ -1,0 +1,24 @@
+{
+    "model_name": "Team Prediction V2",
+    "version": "2.0",
+    "status": "Production Baseline",
+    "algorithm": "XGBoost Regressor",
+    "prediction_target": "Winrate",
+    "primary_score": "Composition Strength",
+    "evaluation_protocol": "honest_wr_v1 (OOF train WR, train-only test WR)",
+    "blend": {
+        "prior_map_weight": 0.3,
+        "lambda": 0.5,
+        "deviation_cap": 0.15,
+        "range_z": 1.28,
+        "range_prior_maps": 10
+    },
+    "feature_count": 116,
+    "train_size": 1757,
+    "test_size": 440,
+    "evaluation": {
+        "mae": 0.3022,
+        "rmse": 0.3578,
+        "r2": -0.0206
+    }
+}
