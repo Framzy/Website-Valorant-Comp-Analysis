@@ -1,0 +1,625 @@
+### ============================================================
+### VALORANT PREDICTOR V2 - API TESTS
+### Base URL: http://localhost:5000
+### ============================================================
+
+
+### =========================================================
+### SHARED OPTIONS - YEARS + MAPS
+### =========================================================
+
+### 1. Get available years
+GET http://localhost:5000/api/options/years
+Accept: application/json
+
+# expected
+# {
+#     "years": [
+#         2024,
+#         2025,
+#         2026
+#     ]
+# }
+
+
+###
+
+### 2. Get maps - valid year
+GET http://localhost:5000/api/options/maps?year=2024
+Accept: application/json
+
+# expected
+# {
+#   "maps": [
+#     "Abyss",
+#     "Ascent",
+#     "Bind",
+#     "Breeze",
+#     "Haven",
+#     "Icebox",
+#     "Lotus",
+#     "Split",
+#     "Sunset"
+#   ],
+#   "year": 2024
+# }
+
+###
+
+### 3. Get maps - missing year
+GET http://localhost:5000/api/options/maps
+Accept: application/json
+
+# expected
+# {
+#   "error": "Year is required."
+# }
+
+###
+
+### 4. Get maps - invalid year
+GET http://localhost:5000/api/options/maps?year=abc
+Accept: application/json
+
+# expected
+# {
+#   "error": "Year must be an integer."
+# }
+
+
+### =========================================================
+### GENERAL ANALYSIS
+### =========================================================
+
+### 1. General Analysis - valid
+POST http://localhost:5000/api/general/analyze
+Content-Type: application/json
+Accept: application/json
+
+{
+  "map": "Abyss",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+# expected
+# {
+#   "fallback": false,
+#   "fallback_source": null,
+#   "historical": {
+#     "agents": [
+#       "cypher",
+#       "jett",
+#       "kayo",
+#       "omen",
+#       "sova"
+#     ],
+#     "found": true,
+#     "map": "Abyss",
+#     "pick_rate": 0.22727272727272727,
+#     "playstyle": "STANDARD",
+#     "role_pattern": "1D-2I-1C-1S",
+#     "total_maps": 10,
+#     "winrate": 0.6,
+#     "year": 2024
+#   },
+#   "input": {
+#     "agents": [
+#       "cypher",
+#       "jett",
+#       "kayo",
+#       "omen",
+#       "sova"
+#     ],
+#     "map": "Abyss",
+#     "year": 2024
+#   },
+#   "playstyle": {
+#     "name": "STANDARD",
+#     "pattern": "1D-2I-1C-1S"
+#   },
+#   "recommendations": [
+#     {
+#       "agents": [
+#         "cypher",
+#         "jett",
+#         "kayo",
+#         "omen",
+#         "sova"
+#       ],
+#       "map": "Abyss",
+#       "pick_rate": 0.22727272727272727,
+#       "playstyle": "STANDARD",
+#       "rank": 1,
+#       "role_pattern": "1D-2I-1C-1S",
+#       "total_maps": 10,
+#       "winrate": 0.6,
+#       "year": 2024
+#     },
+#     {
+#       "agents": [
+#         "astra",
+#         "cypher",
+#         "gekko",
+#         "jett",
+#         "sova"
+#       ],
+#       "map": "Abyss",
+#       "pick_rate": 0.1590909090909091,
+#       "playstyle": "STANDARD",
+#       "rank": 2,
+#       "role_pattern": "1D-2I-1C-1S",
+#       "total_maps": 7,
+#       "winrate": 0.42857142857142855,
+#       "year": 2024
+#     },
+#     {
+#       "agents": [
+#         "astra",
+#         "breach",
+#         "cypher",
+#         "gekko",
+#         "raze"
+#       ],
+#       "map": "Abyss",
+#       "pick_rate": 0.022727272727272728,
+#       "playstyle": "STANDARD",
+#       "rank": 3,
+#       "role_pattern": "1D-2I-1C-1S",
+#       "total_maps": 1,
+#       "winrate": 1.0,
+#       "year": 2024
+#     }
+#   ]
+# }
+
+###
+
+### 2. General Analysis - missing field
+POST http://localhost:5000/api/general/analyze
+Content-Type: application/json
+Accept: application/json
+
+{
+  "map": "Abyss",
+  "year": 2024
+}
+
+# expected
+# {
+#   "error": "Missing required fields: agents"
+# }
+
+
+###
+
+### 3. General Analysis - invalid JSON structure
+POST http://localhost:5000/api/general/analyze
+Content-Type: application/json
+Accept: application/json
+
+{
+  "map": "Abyss",
+  "year": 2024,
+  "agents": "cypher,jett,kayo,omen,sova"
+}
+
+# expected
+# {
+#   "error": "Composition must contain exactly 5 agents."
+# }
+
+###
+
+### 4. General Analysis - unknown map
+POST http://localhost:5000/api/general/analyze
+Content-Type: application/json
+Accept: application/json
+
+{
+  "map": "UnknownMap",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+# expected
+# {
+#   "fallback": true,
+#   "fallback_source": "GLOBAL",
+#   "historical": {
+#     "agents": [
+#       "cypher",
+#       "jett",
+#       "kayo",
+#       "omen",
+#       "sova"
+#     ],
+#     "found": false,
+#     "map": "UnknownMap",
+#     "year": 2024
+#   },
+#   "input": {
+#     "agents": [
+#       "cypher",
+#       "jett",
+#       "kayo",
+#       "omen",
+#       "sova"
+#     ],
+#     "map": "UnknownMap",
+#     "year": 2024
+#   },
+#   "playstyle": {
+#     "name": "STANDARD",
+#     "pattern": "1D-2I-1C-1S"
+#   },
+#   "recommendations": [
+#     {
+#       "agents": [
+#         "jett",
+#         "kayo",
+#         "killjoy",
+#         "omen",
+#         "sova"
+#       ],
+#       "map": "Ascent",
+#       "pick_rate": 0.5971223021582733,
+#       "playstyle": "STANDARD",
+#       "rank": 1,
+#       "role_pattern": "1D-2I-1C-1S",
+#       "total_maps": 166,
+#       "winrate": 0.5542168674698795,
+#       "year": 2024
+#     },
+#     {
+#       "agents": [
+#         "fade",
+#         "killjoy",
+#         "omen",
+#         "raze",
+#         "viper"
+#       ],
+#       "map": "Lotus",
+#       "pick_rate": 0.46551724137931033,
+#       "playstyle": "CONTROL",
+#       "rank": 2,
+#       "role_pattern": "1D-1I-2C-1S",
+#       "total_maps": 189,
+#       "winrate": 0.582010582010582,
+#       "year": 2024
+#     },
+#     {
+#       "agents": [
+#         "cypher",
+#         "jett",
+#         "kayo",
+#         "sova",
+#         "viper"
+#       ],
+#       "map": "Breeze",
+#       "pick_rate": 0.36875,
+#       "playstyle": "STANDARD",
+#       "rank": 3,
+#       "role_pattern": "1D-2I-1C-1S",
+#       "total_maps": 59,
+#       "winrate": 0.4745762711864407,
+#       "year": 2024
+#     }
+#   ]
+# }
+
+
+### =========================================================
+### TEAM OPTIONS - TEAMS
+### =========================================================
+
+### 1. Get teams - valid
+GET http://localhost:5000/api/team/options/teams?year=2024&map=Abyss
+Accept: application/json
+
+# expected
+# {
+  # "map": "Abyss",
+  # "teams": [
+  #   "100 Thieves",
+  #   "Cloud9",
+  #   "DRX",
+  #   "EDward Gaming",
+  #   "FNATIC",
+  #   "FUT Esports",
+  #   "FunPlus Phoenix",
+  #   "G2 Esports",
+  #   "Gen.G",
+  #   "KR\u00dc Esports",
+  #   "LEVIAT\u00c1N",
+  #   "Paper Rex",
+  #   "Sentinels",
+  #   "Talon Esports",
+  #   "Team Heretics",
+  #   "Team Secret",
+  #   "Trace Esports"
+  # ],
+  # "year": 2024
+# }
+
+###
+
+### 2. Get teams - missing year
+GET http://localhost:5000/api/team/options/teams?map=Abyss
+Accept: application/json
+
+# expected
+# {
+  # "error": "Missing required query parameters: year"
+# }
+
+###
+
+### 3. Get teams - missing map
+GET http://localhost:5000/api/team/options/teams?year=2024
+Accept: application/json
+
+# expected
+# {
+  # "error": "Missing required query parameters: map"
+# }
+
+###
+
+### 4. Get teams - invalid year
+GET http://localhost:5000/api/team/options/teams?year=abc&map=Abyss
+Accept: application/json
+
+# expected
+# {
+# "error": "Year must be an integer."
+# }
+###
+
+### 5. Get teams - unknown map
+GET http://localhost:5000/api/team/options/teams?year=2024&map=UnknownMap
+Accept: application/json
+
+# expected
+# {
+# "error": "No Team V2 data for UnknownMap / 2024."
+# }
+
+### =========================================================
+### TEAM PREDICTION
+### =========================================================
+
+### 6. Team Prediction - valid
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "Abyss",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+# expected
+# {
+#   "composition": {
+#     "controller_count": 1,
+#     "duelist_count": 1,
+#     "initiator_count": 2,
+#     "role_pattern": "1D-2I-1C-1S",
+#     "sentinel_count": 1
+#   },
+#   "historical": {
+#     "composition_strength": 3.0,
+#     "found": false,
+#     "winrate": null
+#   },
+#   "inference": {
+#     "feature_count": 116
+#   },
+#   "input": {
+#     "agents": [
+#       "cypher",
+#       "jett",
+#       "kayo",
+#       "omen",
+#       "sova"
+#     ],
+#     "map": "Abyss",
+#     "team": "FNATIC",
+#     "year": 2024
+#   },
+#   "prediction": {
+#     "percentage": 24.13,
+#     "winrate": 0.24130551517009735
+#   }
+# }
+
+
+###
+
+### 7. Team Prediction - missing field
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "Abyss",
+  "year": 2024
+}
+
+# expected
+# {
+#   "error": "Missing required fields: agents"
+# }
+
+
+###
+
+### 8. Team Prediction - invalid agents structure
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "Abyss",
+  "year": 2024,
+  "agents": "cypher,jett,kayo,omen,sova"
+}
+
+# expected
+# {
+#   "error": "Exactly 5 agents are required."
+# }
+
+###
+
+### 9. Team Prediction - unknown team
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "UnknownTeam",
+  "map": "Abyss",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+# expected
+# {
+#   "error": "No Team V2 data for UnknownTeam / Abyss / 2024."
+# }
+
+###
+
+### 10. Team Prediction - invalid map/year combination
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "UnknownMap",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "sova"
+  ]
+}
+
+# expected
+# {
+#   "error": "No Team V2 data for FNATIC / UnknownMap / 2024."
+# }
+
+###
+
+### 11. Team Prediction - unknown agent
+POST http://localhost:5000/api/team/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "team": "FNATIC",
+  "map": "Abyss",
+  "year": 2024,
+  "agents": [
+    "cypher",
+    "jett",
+    "kayo",
+    "omen",
+    "unknown_agent"
+  ]
+}
+
+# expected
+# {
+#   "error": "Unknown agents: unknown_agent"
+# }
+
+### =========================================================
+### METHOD TESTING
+### =========================================================
+
+### 1. Wrong method - General Analysis
+GET http://localhost:5000/api/general/analyze
+Accept: application/json
+
+# expected
+# <!doctype html>
+# <html lang=en>
+# <title>405 Method Not Allowed</title>
+# <h1>Method Not Allowed</h1>
+# <p>The method is not allowed for the requested URL.</p>
+
+
+###
+
+### 2. Wrong method - Team Prediction
+GET http://localhost:5000/api/team/predict
+Accept: application/json
+
+# expected
+# <!doctype html>
+# <html lang=en>
+# <title>405 Method Not Allowed</title>
+# <h1>Method Not Allowed</h1>
+# <p>The method is not allowed for the requested URL.</p>
+
+
+###
+
+### 3. Unknown endpoint
+GET http://localhost:5000/api/unknown
+Accept: application/json
+
+# expected
+# <!doctype html>
+# <html lang=en>
+# <title>404 Not Found</title>
+# <h1>Not Found</h1>
+# <p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>
+
+### ------------------------------------------------------------
+### EXPECTED HTTP STATUS
+### ------------------------------------------------------------
+# Shared years                         -> 200
+# Shared maps                         -> 200
+# Missing/invalid query parameter     -> 400
+# Team options                        -> 200
+# General valid request               -> 200
+# General invalid request             -> 400
+# Team prediction valid request       -> 200
+# Team prediction invalid request     -> 400
+# Unexpected server exception         -> 500
