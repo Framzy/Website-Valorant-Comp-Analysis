@@ -46,7 +46,10 @@ assert exact.empty
 row = prepare_inference_row(df, team, map_name, year, agents, AGENT_ROLE_MAP)
 print(row[['Team','Map','Year','Agent','Role Pattern','Duelist Count','Initiator Count','Controller Count','Sentinel Count','Team Overall WR','Team Map WR','Composition Strength']].to_string(index=False))
 assert row.loc[0, 'Composition Strength'] >= 0
-assert row.loc[0, 'Team Overall WR'] == round(float(df[df.Team == team]['Winrate'].mean()), 4)
-assert row.loc[0, 'Team Map WR'] == round(float(df[(df.Team == team)&(df.Map == map_name)]['Winrate'].mean()), 4)
+# Team Overall WR / Team Map WR are map-weighted and shrunk (Tahap 1), not a
+# plain mean of Winrate -- check against the dataset's own stored value
+# (single source of truth) instead of re-deriving the formula here.
+assert row.loc[0, 'Team Overall WR'] == round(float(df[df.Team == team]['Team Overall WR'].iloc[0]), 4)
+assert row.loc[0, 'Team Map WR'] == round(float(df[(df.Team == team) & (df.Map == map_name)]['Team Map WR'].iloc[0]), 4)
 print('[PASS] Historical strength reproduction')
 print('[PASS] Unseen composition strength preparation')

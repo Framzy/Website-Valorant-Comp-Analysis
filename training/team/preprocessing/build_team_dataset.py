@@ -8,10 +8,12 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+from training.team.comp_strength_hierarchy import build_full_dataset_strength
 from training.team.config import (
     DATASET_PATH,
     DATASET_DIR,
     AGENT_ROLE_MAP,
+    WR_SHRINKAGE_K,
 )
 from training.team.preprocessing.composition_normalizer import (
     analyze_roles,
@@ -289,56 +291,218 @@ def reconstruct_composition(
         result["composition"]
     )
 
+def resolve_composition_records(
+    raw_df: pd.DataFrame,
+    tournament: str,
+    team: str,
+    map_name: str,
+) -> list[dict]:
+    """
+    Split a >5-agent (Tournament, Team, Map) group into its ACTUAL
+    per-record compositions, using the granular (Stage, Match Type)
+    rows that aggregate_matches() discards.
+
+    Previously (see CHANGELOG), a single >5-agent group was collapsed
+    into ONE guessed composition via reconstruct_composition(), and
+    that guess was credited with the group's ENTIRE Total Maps Played
+    -- even on maps where a different composition was actually played.
+    An audit of the whole dataset found this mixed >=2 real
+    compositions in 98.2% of such groups (612 / 623).
+
+    This function instead treats each (Stage, Match Type) record as
+    its own composition:
+      - if that record itself has exactly 5 distinct agents, it is
+        used directly (no guessing at all);
+      - only the residual records that are THEMSELVES ambiguous (a
+        single Stage+Match Type record with != 5 distinct agents --
+        the data simply isn't granular enough to split further, e.g.
+        a Bo3 reported as one record with a mid-series agent swap)
+        fall back to the role-based heuristic (reconstruct_composition),
+        and only for that residual's own maps, not the whole tournament.
+
+    Returns a list of dataset rows (one per resolved composition),
+    each with the same shape as an exact_five row.
+    """
+
+    granular = raw_df[
+        (raw_df["Tournament"] == tournament)
+        & (raw_df["Team"] == team)
+        & (raw_df["Map"] == map_name)
+        & ~(
+            (raw_df["Stage"] == "All Stages")
+            & (raw_df["Match Type"] == "All Match Types")
+        )
+    ]
+
+    records: list[dict] = []
+    ambiguous = granular.iloc[0:0]  # residual rows still needing a guess
+
+    for (stage, match_type), group in granular.groupby(["Stage", "Match Type"]):
+
+        agents = sorted(group["Agent"].unique().tolist())
+
+        if len(agents) == 5:
+
+            records.append(
+                {
+                    "Tournament": tournament,
+                    "Stage": stage,
+                    "Match Type": match_type,
+                    "Team": team,
+                    "Map": map_name,
+                    "Agent": agents,
+                    "Total Wins By Map": int(group["Total Wins By Map"].max()),
+                    "Total Loss By Map": int(group["Total Loss By Map"].max()),
+                    "Total Maps Played": int(group["Total Maps Played"].max()),
+                    "Year": int(group["Year"].iloc[0]),
+                    "__resolved_from": "granular_exact5",
+                }
+            )
+
+        else:
+            # Can't be split further than this: fold into the residual
+            # pool and resolve with the role-based heuristic below.
+            ambiguous = pd.concat([ambiguous, group])
+
+    if len(ambiguous) > 0:
+
+        frequency = build_agent_played_frequency_from_rows(ambiguous)
+
+        guess = reconstruct_composition(frequency)
+
+        residual_maps = sum(
+            int(g["Total Maps Played"].max())
+            for _, g in ambiguous.groupby(["Stage", "Match Type"])
+        )
+        residual_wins = sum(
+            int(g["Total Wins By Map"].max())
+            for _, g in ambiguous.groupby(["Stage", "Match Type"])
+        )
+        residual_losses = sum(
+            int(g["Total Loss By Map"].max())
+            for _, g in ambiguous.groupby(["Stage", "Match Type"])
+        )
+
+        records.append(
+            {
+                "Tournament": tournament,
+                "Stage": "Reconstructed",
+                "Match Type": "Reconstructed",
+                "Team": team,
+                "Map": map_name,
+                "Agent": guess,
+                "Total Wins By Map": residual_wins,
+                "Total Loss By Map": residual_losses,
+                "Total Maps Played": residual_maps,
+                "Year": int(ambiguous["Year"].iloc[0]),
+                "__resolved_from": "role_based_guess",
+            }
+        )
+
+    return records
+
+
+def build_agent_played_frequency_from_rows(
+    subset: pd.DataFrame,
+) -> dict:
+    """
+    Same output shape as build_agent_played_frequency(), but computed
+    directly from an already-filtered set of granular rows instead of
+    re-querying the whole-tournament "All Stages" row. Used only for
+    the residual ambiguous records inside resolve_composition_records().
+    """
+
+    subset = subset.copy()
+
+    subset["Agent Played"] = (
+        subset["Total Wins By Map"]
+        +
+        subset["Total Loss By Map"]
+    )
+
+    summary = (
+        subset
+        .groupby("Agent")
+        .agg(
+            Played=("Agent Played", "sum"),
+            Wins=("Total Wins By Map", "sum"),
+            Losses=("Total Loss By Map", "sum"),
+        )
+    )
+
+    frequency = {}
+
+    for agent, row in summary.iterrows():
+
+        frequency[agent.lower()] = {
+
+            "played": int(row["Played"]),
+
+            "wins": int(row["Wins"]),
+
+            "losses": int(row["Losses"]),
+
+        }
+
+    return frequency
+
+
 def reconstruct_dataset(
     raw_df: pd.DataFrame,
     greater_than_five: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Reconstruct every composition
-    containing more than five agents.
+    Resolve every (Tournament, Team, Map) group with more than five
+    distinct agents into its actual composition(s) (Tahap 5).
+
+    One input group can now produce MORE THAN ONE output row, if the
+    team genuinely used more than one composition within that
+    tournament -- which the audit found to be true 98.2% of the time.
+    Only the rare, genuinely irreducible residual still uses the
+    role-based guess (reconstruct_composition), and only for its own
+    maps. See resolve_composition_records() for the full rationale.
     """
-
-    reconstructed = greater_than_five.copy()
-
-    reconstructed_agents = []
 
     print("\n" + "=" * 60)
     print("RECONSTRUCT DATASET")
     print("=" * 60)
 
-    total = len(reconstructed)
+    all_records: list[dict] = []
 
-    for index, row in reconstructed.iterrows():
+    total = len(greater_than_five)
 
-        frequency = build_agent_played_frequency(
+    for i, (_, row) in enumerate(greater_than_five.iterrows()):
 
-            raw_df = raw_df,
-
+        records = resolve_composition_records(
+            raw_df=raw_df,
             tournament=row["Tournament"],
-
             team=row["Team"],
-
             map_name=row["Map"],
         )
-        
-        composition = reconstruct_composition(
-            frequency
-        )
 
-        reconstructed_agents.append(
-            composition
-        )
+        all_records.extend(records)
 
-        if (len(reconstructed_agents) % 100) == 0:
+        if ((i + 1) % 100) == 0:
 
             print(
                 f"[INFO] Processed "
-                f"{len(reconstructed_agents)}/{total}"
+                f"{i + 1}/{total}"
             )
 
-    reconstructed["Agent"] = reconstructed_agents
-    
+    reconstructed = pd.DataFrame(all_records)
+
+    n_granular = (reconstructed["__resolved_from"] == "granular_exact5").sum()
+    n_guessed = (reconstructed["__resolved_from"] == "role_based_guess").sum()
+
+    print(f"[INFO] Input groups (>5 agents)           : {total}")
+    print(f"[INFO] Resolved composition records        : {len(reconstructed)}")
+    print(f"[INFO]   -> from granular Stage/Match Type (no guessing) : {n_granular}")
+    print(f"[INFO]   -> from role-based guess (irreducible residual) : {n_guessed}")
+
+    reconstructed = reconstructed.drop(columns="__resolved_from")
+
     return reconstructed
+
 
 def merge_dataset(
     exact_five: pd.DataFrame,
@@ -936,29 +1100,33 @@ def calculate_historical_statistics(
     print("=" * 60)
 
     # -------------------------
-    # Team Overall WR
+    # Team Overall WR / Team Map WR
     # -------------------------
+    # Column names and CSV schema are unchanged (backend contract).
+    # Values are now map-weighted (wins / maps, not mean of composition
+    # winrates) and shrunk toward the global winrate so that teams / maps
+    # with few maps do not look extreme:
+    #     (wins + K * global_wr) / (maps + K)
+    # NOTE: these are FULL-DATA statistics used for serving. Training
+    # replaces them with out-of-fold values (see train_team_v2.py) so
+    # that the row's own Winrate never leaks into its own feature.
 
-    df["Team Overall WR"] = (
-        df.groupby("Team")["Winrate"]
-        .transform("mean")
-        .round(4)
+    global_wr = (
+        df["Total Wins By Map"].sum()
+        / df["Total Maps Played"].sum()
     )
 
-    # -------------------------
-    # Team Map WR
-    # -------------------------
+    def shrunk_wr(keys):
+        wins = df.groupby(keys)["Total Wins By Map"].transform("sum")
+        maps = df.groupby(keys)["Total Maps Played"].transform("sum")
+        return (
+            (wins + WR_SHRINKAGE_K * global_wr)
+            / (maps + WR_SHRINKAGE_K)
+        ).round(4)
 
-    df["Team Map WR"] = (
-        df.groupby(
-            [
-                "Team",
-                "Map",
-            ]
-        )["Winrate"]
-        .transform("mean")
-        .round(4)
-    )
+    df["Team Overall WR"] = shrunk_wr(["Team"])
+
+    df["Team Map WR"] = shrunk_wr(["Team", "Map"])
 
     print("[INFO] Historical Statistics Calculated")
 
@@ -1128,19 +1296,14 @@ Target Label
 
 Composition Strength
 
-Status
-------
-Frozen
-
-Reason
-------
-Current dataset does not provide
-enough information to build a more
-accurate target.
-
-Future improvements should come
-from richer datasets, not more
-complex formulas.
+Status (Tahap 4)
+-----------------
+Redefined from a USAGE score (how often a composition/pattern/agent
+was picked) to a PERFORMANCE score (historical win rate), computed
+with hierarchical shrinkage so thin evidence borrows strength from
+broader contexts instead of looking as confident as thick evidence.
+See training/team/comp_strength_hierarchy.py for the full chain and
+rationale.
 ======================================================
 """
 
@@ -1150,7 +1313,12 @@ def calculate_composition_strength(
     """
     Calculate Composition Strength.
 
-    Target label for Team Prediction.
+    Hierarchical, evidence-aware historical win rate (Tahap 4).
+    See comp_strength_hierarchy.py for the level chain. This full-data
+    version is what gets stored in the dataset CSV / used for serving
+    lookups of ALREADY-SEEN compositions; training instead uses the
+    leak-free out-of-fold version (comp_strength_hierarchy.honest_strength),
+    since this one includes each row's own outcome.
     """
 
     print("\n" + "=" * 60)
@@ -1159,52 +1327,26 @@ def calculate_composition_strength(
 
     dataset = dataset.copy()
 
-    dataset["Composition Strength"] = (
-
-        (
-            dataset["Effective Usage"] * 0.50
-
-            +
-
-            dataset["Pattern Usage"] * 0.25
-
-            +
-
-            dataset["Agent Usage Mean"] * 0.15
-
-            +
-
-            dataset["Agent Usage Min"] * 0.10
-
-        )
-
-        * 100
-
-    ).round(2)
+    dataset["Composition Strength"] = build_full_dataset_strength(dataset)
 
     print("[INFO] Composition Strength Calculated")
 
     print()
 
     print(
-
         dataset[
             [
                 "Agent",
                 "Composition Strength",
             ]
         ].head(15)
-
     )
 
     print()
 
     print(
-
         dataset["Composition Strength"]
-
         .describe()
-
     )
 
     return dataset

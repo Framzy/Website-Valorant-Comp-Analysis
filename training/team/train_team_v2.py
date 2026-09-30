@@ -5,6 +5,7 @@ Train Team Model V2
 
 import json
 import joblib
+import numpy as np
 import pandas as pd
 
 from pathlib import Path
@@ -15,6 +16,9 @@ from xgboost import XGBRegressor
 
 from training.team.config import (
     MODEL_TEAM_DIR,
+    BLEND,
+    PATTERN_ADJUST,
+    XGB_PARAMS,
 )
 
 
@@ -22,6 +26,9 @@ from training.team.feature_engineering import (
     load_dataset,
     build_feature_pipeline,
 )
+
+from training.team.wr_features import apply_honest_wr
+from training.team.comp_strength_hierarchy import honest_strength
 
 from sklearn.metrics import (
     mean_absolute_error,
@@ -78,13 +85,7 @@ def build_model():
 
         objective="reg:squarederror",
 
-        n_estimators=300,
-
-        learning_rate=0.05,
-
-        max_depth=6,
-
-        random_state=42,
+        **XGB_PARAMS,
 
     )
 
@@ -95,6 +96,7 @@ def build_model():
 def train_model(
     model,
     train_data,
+    sample_weight=None,
 ):
     """
     Train XGBoost model.
@@ -109,6 +111,8 @@ def train_model(
         train_data["X_train"],
 
         train_data["y_train"],
+
+        sample_weight=sample_weight,
 
     )
 
@@ -157,16 +161,22 @@ def evaluate_model(
         prediction,
     )
 
-    rmse = mean_squared_error(
+    rmse = float(np.sqrt(mean_squared_error(
         train_data["y_test"],
         prediction,
-        squared=False,
-    )
+    )))
 
     r2 = r2_score(
         train_data["y_test"],
         prediction,
     )
+
+    baseline_mae = mean_absolute_error(
+        train_data["y_test"],
+        np.full(len(train_data["y_test"]), train_data["y_train"].mean()),
+    )
+
+    print(f"[INFO] Baseline MAE (predict train mean) : {baseline_mae:.4f}")
 
     print(f"[INFO] MAE  : {mae:.4f}")
 
@@ -296,6 +306,12 @@ def save_metadata(
 
         "primary_score": "Composition Strength",
 
+        "evaluation_protocol": "honest_wr_v1 (OOF train WR, train-only test WR)",
+
+        "blend": BLEND,
+
+        "pattern_adjust": PATTERN_ADJUST,
+
         "feature_count": len(
             pipeline["feature_names"]
         ),
@@ -363,13 +379,38 @@ def main():
 
     )
 
+    # Leak-free WR features (train: out-of-fold, test: train-only).
+    train_data = apply_honest_wr(
+        train_data,
+        df,
+        pipeline["feature_names"],
+    )
+
+    # Leak-free Composition Strength (Tahap 4): same idea, since the
+    # hierarchical chain also folds in each row's own Winrate.
+    cs_col = pipeline["feature_names"].index("composition_strength")
+    cs_train, cs_test = honest_strength(
+        df,
+        train_data["y_train"].index,
+        train_data["y_test"].index,
+    )
+    train_data["X_train"][:, cs_col] = cs_train
+    train_data["X_test"][:, cs_col] = cs_test
+
     model = build_model()
+
+    # Rows with more maps are more reliable targets.
+    sample_weight = np.sqrt(
+        df.loc[train_data["y_train"].index, "Total Maps Played"].to_numpy()
+    )
 
     model = train_model(
 
         model,
 
         train_data,
+
+        sample_weight=sample_weight,
 
     )
 
