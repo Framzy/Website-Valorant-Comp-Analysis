@@ -228,7 +228,7 @@
 
 .stat-card {
   display: flex;
-
+  color: white;
   align-items: center;
 
   gap: 12px;
