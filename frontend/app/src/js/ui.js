@@ -71,15 +71,11 @@ export function closeError() {
 }
 
 export function showResults(elementId) {
-  const element = document.getElementById(elementId);
-
-  element?.classList.add("visible");
+  document.getElementById(elementId)?.classList.add("active", "visible");
 }
 
 export function hideResults(elementId) {
-  const element = document.getElementById(elementId);
-
-  element?.classList.remove("visible");
+  document.getElementById(elementId)?.classList.remove("active", "visible");
 }
 
 export function revealResults() {

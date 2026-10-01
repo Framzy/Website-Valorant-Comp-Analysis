@@ -5,22 +5,15 @@ import "../css/responsive.css";
 
 import { state } from "./state.js";
 
-import {
-  initAgents,
-  resetAgents,
-  getSelectedAgents,
-  isAgentSelectionComplete,
-} from "./agents.js";
+import { initAgents, resetAgents } from "./agents.js";
 
 import { closeError, hideResults, showError } from "./ui.js";
 
-import {
-  getAvailableYears,
-  getAvailableMaps,
-  getTeamTeams,
-  analyzeGeneral,
-  predictTeam,
-} from "./api.js";
+import { getAvailableYears, getAvailableMaps, getTeamTeams } from "./api.js";
+
+import { handleGeneralAction } from "./general.js";
+
+import { handleTeamAction } from "./team.js";
 
 import { logger } from "./logger.js";
 
@@ -259,77 +252,6 @@ function handleTeamChange(event) {
   updateTeamSummary(team);
 }
 
-async function handleGeneralAction() {
-  logger.info("General analysis requested.");
-
-  const validation = validateCommonInputs();
-
-  if (!validation.valid) {
-    logger.warn("General validation failed.", validation.message);
-    showError(validation.message);
-    return;
-  }
-
-  const payload = {
-    map: validation.map,
-    year: Number(validation.year),
-    agents: validation.agents,
-  };
-
-  logger.info("Sending general analysis request.", payload);
-
-  try {
-    const result = await analyzeGeneral(payload);
-
-    logger.info("General analysis completed.", result);
-
-    console.log("GENERAL API RESPONSE:", result);
-  } catch (error) {
-    logger.error("General analysis failed.", error);
-
-    showError(
-      error.response?.data?.message ||
-        "Gagal melakukan analisis. Silakan coba lagi.",
-    );
-  }
-}
-
-async function handleTeamAction() {
-  logger.info("Team prediction requested.");
-
-  const validation = validateTeamInputs();
-
-  if (!validation.valid) {
-    logger.warn("Team validation failed.", validation.message);
-    showError(validation.message);
-    return;
-  }
-
-  const payload = {
-    team: validation.team,
-    map: validation.map,
-    year: Number(validation.year),
-    agents: validation.agents,
-  };
-
-  logger.info("Sending team prediction request.", payload);
-
-  try {
-    const result = await predictTeam(payload);
-
-    logger.info("Team prediction completed.", result);
-
-    console.log("TEAM API RESPONSE:", result);
-  } catch (error) {
-    logger.error("Team prediction failed.", error);
-
-    showError(
-      error.response?.data?.message ||
-        "Gagal melakukan prediksi. Silakan coba lagi.",
-    );
-  }
-}
-
 /* =========================================================
    RESET
    ========================================================= */
@@ -447,65 +369,6 @@ function resetSummaries() {
   document.getElementById("namaTahun")?.replaceChildren("—");
   document.getElementById("namaMap")?.replaceChildren("—");
   document.getElementById("namaTeam")?.replaceChildren("—");
-}
-
-/* =========================================================
-   VALIDATION
-   ========================================================= */
-
-function validateCommonInputs() {
-  const year = document.getElementById("year")?.value;
-  const map = document.getElementById("map")?.value;
-
-  if (!year) {
-    return {
-      valid: false,
-      message: "Silakan pilih tahun terlebih dahulu.",
-    };
-  }
-
-  if (!map) {
-    return {
-      valid: false,
-      message: "Silakan pilih map terlebih dahulu.",
-    };
-  }
-
-  if (!isAgentSelectionComplete()) {
-    return {
-      valid: false,
-      message: "Silakan pilih 5 agent terlebih dahulu.",
-    };
-  }
-
-  return {
-    valid: true,
-    year,
-    map,
-    agents: getSelectedAgents(),
-  };
-}
-
-function validateTeamInputs() {
-  const common = validateCommonInputs();
-
-  if (!common.valid) {
-    return common;
-  }
-
-  const team = document.getElementById("team")?.value;
-
-  if (!team) {
-    return {
-      valid: false,
-      message: "Silakan pilih team terlebih dahulu.",
-    };
-  }
-
-  return {
-    ...common,
-    team,
-  };
 }
 
 /* =========================================================
