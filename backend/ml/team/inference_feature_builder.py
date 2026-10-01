@@ -20,6 +20,9 @@ Important:
 from __future__ import annotations
 
 import ast
+
+from backend.ml.team.comp_strength_hierarchy import strength_for_new_row
+from pathlib import Path
 from typing import Iterable
 
 import numpy as np
@@ -123,21 +126,25 @@ def find_exact_composition(
 
 
 def calculate_team_overall_wr(df: pd.DataFrame, team: str) -> float:
-    """Match build_team_dataset.py: mean composition Winrate by Team."""
+    """Read the precomputed (map-weighted, shrunk) Team Overall WR.
+
+    build_team_dataset.py stores the same value on every row of a team, so
+    serving is a lookup and can never drift from the dataset formula.
+    """
     rows = df[df["Team"] == team]
     if rows.empty:
         raise ValueError(f"No Team V2 data found for team '{team}'.")
-    return round(float(rows["Winrate"].mean()), 4)
+    return round(float(rows["Team Overall WR"].iloc[0]), 4)
 
 
 def calculate_team_map_wr(df: pd.DataFrame, team: str, map_name: str) -> float:
-    """Match build_team_dataset.py: mean composition Winrate by Team + Map."""
+    """Read the precomputed (map-weighted, shrunk) Team Map WR."""
     rows = df[(df["Team"] == team) & (df["Map"] == map_name)]
     if rows.empty:
         raise ValueError(
             f"No Team V2 data found for team '{team}' on map '{map_name}'."
         )
-    return round(float(rows["Winrate"].mean()), 4)
+    return round(float(rows["Team Map WR"].iloc[0]), 4)
 
 
 def calculate_agent_familiarity(
@@ -179,83 +186,31 @@ def calculate_composition_strength(
     agent_role_map: dict[str, str],
 ) -> dict[str, float | int | str]:
     """
-    Rebuild Composition Strength using the same components and weights as
-    build_team_dataset.py.
+    Composition Strength via the hierarchical performance chain (Tahap 4).
 
-    No Winrate or prediction is used by this calculation.
+    `year` is accepted for backward compatibility but not used for
+    grouping: every level pools across years, same as Team Overall WR /
+    Team Map WR (Tahap 1), because most compositions have too few maps
+    within a single year to say anything on their own.
+
+    No Winrate for THIS row is used (the row itself is excluded from
+    training via comp_strength_hierarchy.honest_strength); this function
+    is the full-data serving lookup, matching what build_team_dataset.py
+    stores in the dataset for already-seen compositions.
     """
     agents = normalize_agents(agents)
-    context = _context_rows(df, team, map_name, year)
-
-    if context.empty:
-        raise ValueError(
-            f"No context data found for {team} / {map_name} / {year}."
-        )
-
-    context_played = float(context["Total Maps Played"].sum())
-
-    exact = find_exact_composition(df, team, map_name, year, agents)
-    if len(exact) > 1:
-        raise ValueError("Multiple rows found for the same exact composition.")
-
-    composition_played = (
-        float(exact.iloc[0]["Total Maps Played"]) if len(exact) == 1 else 0.0
-    )
-
-    # Same global max-played denominator used by build_team_dataset.py.
-    global_max_played = float(df["Total Maps Played"].max())
-    if global_max_played <= 0:
-        reliability = 0.0
-    else:
-        reliability = float(
-            np.log1p(composition_played) / np.log1p(global_max_played)
-        )
-
-    usage_ratio = round(
-        composition_played / context_played if context_played > 0 else 0.0,
-        4,
-    )
-    reliability = round(reliability, 4)
-    effective_usage = round(usage_ratio * reliability, 4)
-
     role_counts = build_role_counts(agents, agent_role_map)
     role_pattern = build_role_pattern(role_counts)
+    composition_key = "|".join(agents)
 
-    pattern_played = float(
-        context.loc[context["Role Pattern"] == role_pattern, "Total Maps Played"].sum()
-    )
-    pattern_usage = round(
-        pattern_played / context_played if context_played > 0 else 0.0,
-        4,
-    )
-
-    agent_usage_mean, agent_usage_min = calculate_agent_familiarity(
-        context,
-        agents,
-    )
-
-    composition_strength = (
-        (
-            effective_usage * 0.50
-            + pattern_usage * 0.25
-            + agent_usage_mean * 0.15
-            + agent_usage_min * 0.10
-        )
-        * 100
-    )
-    composition_strength = float(np.round(composition_strength, 2))
+    result = strength_for_new_row(df, team, map_name, role_pattern, composition_key)
 
     return {
-        "context_played": context_played,
-        "composition_played": composition_played,
-        "usage_ratio": usage_ratio,
-        "reliability": reliability,
-        "effective_usage": effective_usage,
-        "pattern_played": pattern_played,
-        "pattern_usage": pattern_usage,
-        "agent_usage_mean": agent_usage_mean,
-        "agent_usage_min": agent_usage_min,
-        "composition_strength": round(composition_strength, 2),
+        "composition_strength": result["composition_strength"],
+        "levels": result["levels"],
+        "evidence": result["evidence"],
+        "role_pattern_never_observed": result["role_pattern_never_observed"],
+        "pattern_adoption": result["pattern_adoption"],
         "role_pattern": role_pattern,
         "duelist_count": role_counts["duelist"],
         "initiator_count": role_counts["initiator"],
