@@ -123,14 +123,70 @@ def get_playstyle(agents):
 
     pattern = get_role_pattern(agents)
 
+    name = PLAYSTYLE_MAP.get(
+        pattern,
+        "UNCLASSIFIED",
+    )
+
+    match name:
+        case "STANDARD":
+            desc = (
+                "Ini adalah gaya main paling aman dan fleksibel yang sering "
+                "kamu lihat di game turnamen. Komposisinya sangat seimbang. "
+                "Kamu punya Duelist untuk maju duluan, Initiator untuk cari "
+                "info musuh, Controller untuk tutup pandangan (smoke), dan "
+                "Sentinel untuk jaga lini belakang atau site. Cocok untuk "
+                "tim yang ingin bermain rapi tanpa taktik yang terlalu "
+                "aneh-aneh."
+            )
+
+        case "CONTROL":
+            desc = (
+                "Gaya main ini berfokus pada membuat musuh kebingungan dan "
+                "mempersempit jarak pandang mereka. Dengan adanya dua smoker "
+                "di tim, kamu bisa menutup banyak sudut pandang musuh "
+                "sekaligus, melakukan fake site (mengecoh musuh), dan "
+                "mengendalikan pergerakan peta dengan sangat leluasa. Cocok "
+                "buat kamu yang suka main taktis dan menang lewat strategi, "
+                "bukan cuma adu tembak."
+            )
+
+        case "AGGRESSIVE":
+            desc = (
+                "Ini adalah gaya main gas pol dan penuh aksi. Dengan "
+                "mengandalkan dua Duelist, tim kamu punya kekuatan tempur "
+                "(firepower) dan mobilitas yang sangat tinggi. Tujuannya "
+                "cuma satu: serang site secepat mungkin, culik musuh, dan "
+                "menangkan adu tembak sejak awal ronde. Sangat cocok untuk "
+                "pemain yang suka main cepat, bar-bar, dan percaya diri "
+                "dengan kemampuan aim mereka."
+            )
+
+        case "UTILITY_HEAVY":
+            desc = (
+                "Gaya main ini mengutamakan sabar, jebakan, dan penggunaan "
+                "skill (utilitas). Karena seringkali tidak punya Duelist "
+                "atau justru punya dua Sentinel, tim kamu akan bermain "
+                "sangat lambat saat menyerang, namun menjadi benteng "
+                "pertahanan yang mustahil ditembus saat bertahan. Kamu akan "
+                "menang dengan cara memancing musuh masuk ke area jebakan "
+                "atau menahan site hingga waktu habis. Cocok untuk pemain "
+                "yang penyabar dan suka menyiksa mental musuh dengan setup "
+                "ability."
+            )
+
+        case _:
+            desc = (
+                "Komposisi ini memiliki role pattern yang belum "
+                "diklasifikasikan ke dalam playstyle tertentu,"
+                "karena memiliki pattern yang tidak seimbang dan jarang dimainkan."
+            )
+
     return {
         "pattern": pattern,
-        "name": PLAYSTYLE_MAP.get(
-            pattern,
-            "UNCLASSIFIED",
-        ),
+        "description": desc,
+        "name": name,
     }
-
 
 # ============================================================
 # DATA PREPARATION
@@ -294,6 +350,7 @@ def get_recommendations(
         })
 
     return recommendations
+    
 
 
 # ============================================================
@@ -478,6 +535,7 @@ class GeneralAnalysisService:
 
             "playstyle": {
                 "name": playstyle["name"],
+                "description": playstyle["description"],
                 "pattern": playstyle["pattern"],
             },
 
