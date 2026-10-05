@@ -284,110 +284,135 @@
           ================================================== -->
           <div class="outputPredict mode-panel" id="teamResult">
             <div class="outputContent">
-              <!-- Team Prediction Gauge -->
+              <!-- Team Prediction Conclusion -->
               <div class="gauge-section" id="teamGaugeSection">
-                <p class="gauge-label" id="teamGaugeLabel">Predicted Winrate</p>
+                <p class="gauge-label" id="teamGaugeLabel">Kesimpulan Prediksi</p>
 
                 <div class="gauge-wrapper">
-                  <svg
-                    class="gauge-svg"
-                    viewBox="0 0 200 120"
-                    id="teamGaugeSvg"
-                  >
-                    <!-- Background -->
+                  <svg class="gauge-svg" viewBox="0 0 200 120" id="teamGaugeSvg">
                     <path class="gauge-bg" d="M 20 100 A 80 80 0 0 1 180 100" />
-
-                    <!-- Fill -->
-                    <path
-                      class="gauge-fill"
-                      id="teamGaugeFill"
-                      d="M 20 100 A 80 80 0 0 1 180 100"
-                    />
+                    <path class="gauge-fill" id="teamGaugeFill" d="M 20 100 A 80 80 0 0 1 180 100" />
                   </svg>
 
                   <div class="gauge-center">
-                    <span class="gauge-status" id="teamGaugeStatus"> — </span>
+                    <span class="gauge-status" id="teamGaugeStatus">—</span>
+                    <span class="gauge-sub" id="teamGaugeSubText">Predicted —</span>
+                  </div>
+                </div>
 
-                    <span class="gauge-sub" id="teamGaugeSubText">
-                      Pilih komposisi dan prediksi
-                    </span>
+                <p class="team-conclusion-reason" id="teamConclusionReason">—</p>
+
+                <div class="team-prediction-meta">
+                  <div>
+                    <span>Estimated Range</span>
+                    <strong id="teamPredictionRange">—</strong>
+                  </div>
+                  <div>
+                    <span>Confidence</span>
+                    <strong id="teamConfidenceLevel">—</strong>
                   </div>
                 </div>
               </div>
 
-              <!-- Team Prediction Stats -->
+              <!-- Team Prediction Statistics -->
               <div class="stat-cards" id="teamStatCards">
-                <!-- Prediction -->
                 <div class="stat-card reveal-item">
                   <div class="stat-icon">📈</div>
-
                   <div class="stat-info">
-                    <span class="stat-label"> Predicted Winrate </span>
-
-                    <span class="stat-value" id="teamPredictionWinrate">
-                      —
-                    </span>
+                    <span class="stat-label">Predicted Winrate</span>
+                    <span class="stat-value" id="teamPredictionWinrate">—</span>
                   </div>
                 </div>
 
-                <!-- Historical Winrate -->
                 <div class="stat-card reveal-item">
                   <div class="stat-icon">📊</div>
-
                   <div class="stat-info">
-                    <span class="stat-label"> Historical Winrate </span>
-
-                    <span class="stat-value" id="teamHistoricalWinrate">
-                      —
-                    </span>
+                    <span class="stat-label">Prior Winrate</span>
+                    <span class="stat-value" id="teamPriorWinrate">—</span>
                   </div>
                 </div>
 
-                <!-- Composition Strength -->
                 <div class="stat-card reveal-item">
                   <div class="stat-icon">💪</div>
-
                   <div class="stat-info">
-                    <span class="stat-label"> Composition Strength </span>
-
-                    <span class="stat-value" id="teamCompositionStrength">
-                      —
-                    </span>
+                    <span class="stat-label">Historical Composition Strength</span>
+                    <span class="stat-value" id="teamCompositionStrength">—</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Team Composition Details -->
-              <div class="detail-row" id="teamDetailRow">
-                <!-- Role Pattern -->
-                <div class="detail-card reveal-item">
-                  <p class="detail-title">Role Pattern</p>
+              <!-- Selected Team Composition -->
+              <div class="team-composition-section reveal-item" id="teamCompositionSection">
+                <p class="combo-label">Selected Team Composition</p>
+                <div class="team-agent-list" id="teamSelectedAgents"></div>
 
-                  <p class="detail-value" id="teamRolePattern">—</p>
-                </div>
+                <div class="team-composition-analysis">
+                  <div class="team-analysis-block">
+                    <span class="detail-title">Playstyle</span>
+                    <span class="playstyle-badge playstyle-unclassified" id="teamPlaystyleBadge">UNCLASSIFIED</span>
+                    <p class="playstyle-description" id="teamPlaystyleDescription">—</p>
+                  </div>
 
-                <!-- Role Composition -->
-                <div class="detail-card reveal-item">
-                  <p class="detail-title">Komposisi Role</p>
+                  <div class="team-analysis-block">
+                    <span class="detail-title">Role Pattern</span>
+                    <p class="detail-value" id="teamRolePattern">—</p>
+                  </div>
 
-                  <p class="detail-value" id="teamRoleComposition">—</p>
+                  <div class="team-analysis-block">
+                    <span class="detail-title">Komposisi Role</span>
+                    <div class="role-pattern-value" id="teamRoleComposition">—</div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Historical Information -->
+              <!-- Prediction Context -->
+              <div class="team-context-section reveal-item" id="teamContextSection">
+                <p class="combo-label">Prediction Context</p>
+                <div class="team-context-grid">
+                  <div>
+                    <span class="detail-title">Pattern Adjustment</span>
+                    <p class="detail-value" id="teamPatternAdjustment">—</p>
+                  </div>
+                  <div>
+                    <span class="detail-title">Confidence Note</span>
+                    <p class="detail-value" id="teamConfidenceNote">—</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Historical Most-Used Composition -->
               <div class="combo-section reveal-item" id="teamHistoricalSection">
-                <p class="combo-label">Historical Composition</p>
+                <p class="combo-label">Historical Most-Used Composition</p>
+                <div class="team-agent-list" id="teamHistoricalAgents"></div>
 
-                <p class="combo-value" id="teamHistoricalStatus">—</p>
+                <div class="team-history-analysis">
+                  <div>
+                    <span class="detail-title">Playstyle</span>
+                    <span class="playstyle-badge playstyle-unclassified" id="teamHistoricalPlaystyleBadge">UNCLASSIFIED</span>
+                    <p class="playstyle-description" id="teamHistoricalPlaystyleDescription">—</p>
+                  </div>
+                  <div>
+                    <span class="detail-title">Role Pattern</span>
+                    <p class="detail-value" id="teamHistoricalRolePattern">—</p>
+                  </div>
+                  <div>
+                    <span class="detail-title">Maps Played</span>
+                    <p class="detail-value" id="teamHistoricalMaps">—</p>
+                  </div>
+                  <div>
+                    <span class="detail-title">Winrate</span>
+                    <p class="detail-value" id="teamHistoricalCompositionWinrate">—</p>
+                  </div>
+                  <div>
+                    <span class="detail-title">Composition Strength</span>
+                    <p class="detail-value" id="teamHistoricalCompositionStrength">—</p>
+                  </div>
+                </div>
               </div>
 
-              <!-- Debug / Inference Information -->
-              <div
-                class="team-inference-section reveal-item"
-                id="teamInferenceSection"
-              >
+              <!-- Model Information -->
+              <div class="team-inference-section reveal-item" id="teamInferenceSection">
                 <p class="combo-label">Model Information</p>
-
                 <p class="combo-value" id="teamFeatureCount">—</p>
               </div>
             </div>
