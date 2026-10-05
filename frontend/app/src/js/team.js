@@ -1,5 +1,6 @@
 import { predictTeam } from "./api.js";
 import { getSelectedAgents, isAgentSelectionComplete } from "./agents.js";
+import { agents as agentData } from "../data/agent.js";
 import {
   hideLoading,
   showError,
@@ -55,41 +56,16 @@ function validateTeamInputs() {
   const map = document.getElementById("map")?.value;
   const team = document.getElementById("team")?.value;
 
-  if (!year) {
-    return {
-      valid: false,
-      message: "Silakan pilih tahun terlebih dahulu.",
-    };
-  }
+  if (!year)
+    return { valid: false, message: "Silakan pilih tahun terlebih dahulu." };
+  if (!map)
+    return { valid: false, message: "Silakan pilih map terlebih dahulu." };
+  if (!team)
+    return { valid: false, message: "Silakan pilih team terlebih dahulu." };
+  if (!isAgentSelectionComplete())
+    return { valid: false, message: "Silakan pilih 5 agent terlebih dahulu." };
 
-  if (!map) {
-    return {
-      valid: false,
-      message: "Silakan pilih map terlebih dahulu.",
-    };
-  }
-
-  if (!team) {
-    return {
-      valid: false,
-      message: "Silakan pilih team terlebih dahulu.",
-    };
-  }
-
-  if (!isAgentSelectionComplete()) {
-    return {
-      valid: false,
-      message: "Silakan pilih 5 agent terlebih dahulu.",
-    };
-  }
-
-  return {
-    valid: true,
-    year,
-    map,
-    team,
-    agents: getSelectedAgents(),
-  };
+  return { valid: true, year, map, team, agents: getSelectedAgents() };
 }
 
 function renderTeamResult(result) {
@@ -98,6 +74,8 @@ function renderTeamResult(result) {
   renderTeamPrediction(result.prediction);
   renderTeamHistorical(result.historical);
   renderTeamComposition(result.composition);
+  renderTeamSelectedAgents(result.input?.agents);
+  renderTeamPredictionContext(result.prediction, result.confidence);
   renderTeamBestComposition(result.best_composition);
   renderTeamInference(result.inference);
 }
@@ -110,114 +88,357 @@ function renderTeamPrediction(prediction) {
     return;
   }
 
-  const element = document.getElementById("teamPredictionWinrate");
+  setText("teamPredictionWinrate", formatPercent(percentage));
 
-  if (element) {
-    element.textContent = `${percentage.toFixed(2)}%`;
+  const range = prediction?.range;
+  if (typeof range?.low === "number" && typeof range?.high === "number") {
+    setText(
+      "teamPredictionRange",
+      `${formatPercent(range.low * 100)} – ${formatPercent(range.high * 100)}`,
+    );
+  } else {
+    setText("teamPredictionRange", "—");
   }
 
-  updateTeamGauge(percentage);
+  const conclusion = assessTeamPrediction(prediction);
+  updateTeamGauge(percentage, conclusion);
 }
 
-function updateTeamGauge(percentage) {
+/**
+ * Assess the prediction relative to the historical/context prior.
+ *
+ * The conclusion intentionally does not use the predicted percentage alone.
+ * A prediction is considered:
+ * - Layak Dicoba: final prediction is >= 5 percentage points above prior
+ * - Ragu-Ragu: difference is between -5 and +5 points
+ * - Kurang Direkomendasikan: final prediction is <= 5 points below prior
+ *
+ * Confidence remains supporting information and is not used as the primary
+ * classification criterion.
+ */
+function assessTeamPrediction(prediction) {
+  const percentage = prediction?.percentage;
+  const prior = prediction?.prior_winrate;
+
+  if (typeof percentage !== "number" || typeof prior !== "number") {
+    return {
+      key: "unknown",
+      label: "—",
+      className: "team-conclusion-unknown",
+      reason:
+        "Kesimpulan belum dapat ditentukan karena data pembanding tidak tersedia.",
+    };
+  }
+
+  const difference = percentage - prior * 100;
+  const threshold = 10;
+
+  if (difference >= threshold) {
+    return {
+      key: "recommended",
+      label: "Potensial",
+      className: "team-conclusion-recommended",
+      reason: `Prediksi ${formatPercent(percentage)} berada ${formatPercent(Math.abs(difference))} di atas prior ${formatPercent(prior * 100)}.`,
+    };
+  }
+
+  if (difference <= -threshold) {
+    return {
+      key: "risk",
+      label: "Beresiko",
+      className: "team-conclusion-risk",
+      reason: `Prediksi ${formatPercent(percentage)} berada ${formatPercent(Math.abs(difference))} di bawah prior ${formatPercent(prior * 100)}.`,
+    };
+  }
+
+  return {
+    key: "stable",
+    label: "Stabil",
+    className: "team-conclusion-stable",
+    reason: `Prediksi ${formatPercent(percentage)} relatif dekat dengan prior ${formatPercent(prior * 100)} (${difference >= 0 ? "+" : "-"}${formatPercent(Math.abs(difference))}).`,
+  };
+}
+
+function updateTeamGauge(percentage, conclusion) {
+  const section = document.getElementById("teamGaugeSection");
   const fill = document.getElementById("teamGaugeFill");
   const status = document.getElementById("teamGaugeStatus");
   const subText = document.getElementById("teamGaugeSubText");
+  const reason = document.getElementById("teamConclusionReason");
+
+  if (section) {
+    section.classList.remove(
+      "conclusion-recommended",
+      "conclusion-stable",
+      "conclusion-risk",
+      "conclusion-unknown",
+    );
+    section.classList.add(`conclusion-${conclusion.key}`);
+  }
 
   if (status) {
-    status.textContent = `${percentage.toFixed(2)}%`;
+    status.className = `gauge-status conclusion-${conclusion.key}`;
+    status.textContent = conclusion.label;
   }
 
-  if (subText) {
-    subText.textContent = "Predicted Winrate";
+  // Keep the gauge center concise. The detailed explanation belongs below.
+  setText("teamGaugeSubText", `Predicted ${formatPercent(percentage)}`);
+
+  if (reason) {
+    reason.textContent = conclusion.reason;
   }
 
-  if (!fill) {
-    return;
+  if (fill) {
+    fill.classList.remove(
+      "conclusion-recommended",
+      "conclusion-stable",
+      "conclusion-risk",
+      "conclusion-unknown",
+    );
+
+    fill.classList.add(`conclusion-${conclusion.key}`);
+
+    const gaugePosition = {
+      risk: 30,
+      stable: 60,
+      recommended: 85,
+      unknown: 50,
+    };
+
+    const clamped = gaugePosition[conclusion.key] ?? 50;
+
+    const pathLength = fill.getTotalLength();
+
+    fill.style.strokeDasharray = pathLength;
+    fill.style.strokeDashoffset = pathLength - (clamped / 100) * pathLength;
   }
-
-  const clamped = Math.max(0, Math.min(100, percentage));
-
-  const pathLength = fill.getTotalLength();
-
-  fill.style.strokeDasharray = pathLength;
-  fill.style.strokeDashoffset = pathLength - (clamped / 100) * pathLength;
 }
 
 function renderTeamHistorical(historical) {
-  const element = document.getElementById("teamHistoricalWinrate");
-
-  if (!element) {
-    return;
-  }
+  const element = document.getElementById("teamHistoricalCompositionWinrate");
+  if (!element) return;
 
   if (!historical?.found || historical.winrate === null) {
     element.textContent = "Belum ada data";
-    return;
+  } else {
+    element.textContent = formatPercent(historical.winrate * 100);
   }
 
-  element.textContent = `${(historical.winrate * 100).toFixed(2)}%`;
+  const strength = historical?.composition_strength;
+  setText(
+    "teamCompositionStrength",
+    typeof strength === "number" ? strength.toFixed(2) : "Belum ada data",
+  );
 }
 
 function renderTeamComposition(composition) {
-  if (!composition) {
-    return;
+  if (!composition) return;
+
+  renderTeamPlaystyle(
+    "teamPlaystyleBadge",
+    "teamPlaystyleDescription",
+    composition.playstyle,
+  );
+  setText("teamRolePattern", composition.role_pattern || "—");
+
+  const container = document.getElementById("teamRoleComposition");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const roles = [
+    ["Duelist", composition.duelist_count, "duelist"],
+    ["Initiator", composition.initiator_count, "initiator"],
+    ["Controller", composition.controller_count, "controller"],
+    ["Sentinel", composition.sentinel_count, "sentinel"],
+  ];
+
+  roles.forEach(([label, count, role]) => {
+    const chip = document.createElement("span");
+    chip.className = `team-role-chip team-role-${role}`;
+    chip.textContent = `${label} ×${count}`;
+    container.appendChild(chip);
+  });
+}
+
+function renderTeamSelectedAgents(agentNames) {
+  renderAgentVisuals("teamSelectedAgents", agentNames);
+}
+
+function renderTeamPredictionContext(prediction, confidence) {
+  const adjustment = prediction?.pattern_adjustment;
+
+  if (adjustment && typeof adjustment.points === "number") {
+    const points =
+      adjustment.points > 0 ? `+${adjustment.points}` : adjustment.points;
+    setText("teamPatternAdjustment", `${points} points`);
+  } else {
+    setText("teamPatternAdjustment", "—");
   }
 
-  const rolePattern = document.getElementById("teamRolePattern");
+  setText(
+    "teamModelWinrate",
+    typeof prediction?.model_winrate === "number"
+      ? formatPercent(prediction.model_winrate * 100)
+      : "—",
+  );
 
-  if (rolePattern) {
-    rolePattern.textContent = composition.role_pattern || "—";
-  }
+  setText(
+    "teamPriorWinrate",
+    typeof prediction?.prior_winrate === "number"
+      ? formatPercent(prediction.prior_winrate * 100)
+      : "—",
+  );
 
-  const roleComposition = document.getElementById("teamRoleComposition");
+  setText(
+    "teamConfidenceNote",
+    confidence?.note || adjustment?.reason || "Tidak ada konteks tambahan.",
+  );
 
-  if (roleComposition) {
-    roleComposition.textContent =
-      `Duelist ${composition.duelist_count} • ` +
-      `Initiator ${composition.initiator_count} • ` +
-      `Controller ${composition.controller_count} • ` +
-      `Sentinel ${composition.sentinel_count}`;
-  }
+  setText("teamConfidenceLevel", formatConfidence(confidence?.level));
 }
 
 function renderTeamBestComposition(bestComposition) {
-  const element = document.getElementById("teamHistoricalStatus");
-
-  if (!element) {
-    return;
-  }
+  const section = document.getElementById("teamHistoricalSection");
 
   if (!bestComposition?.found) {
-    element.textContent = "Belum ada historical composition.";
+    if (section) section.classList.add("no-data");
+    renderAgentVisuals("teamHistoricalAgents", []);
+    renderTeamPlaystyle(
+      "teamHistoricalPlaystyleBadge",
+      "teamHistoricalPlaystyleDescription",
+      null,
+    );
+    setText("teamHistoricalRolePattern", "—");
+    setText("teamHistoricalMaps", "Belum ada data");
+    setText("teamHistoricalCompositionWinrate", "—");
+    setText("teamHistoricalCompositionStrength", "—");
     return;
   }
 
-  const agents = bestComposition.agents?.map(capitalize).join(" • ");
+  if (section) section.classList.remove("no-data");
 
-  element.textContent =
-    `${agents} | ` +
-    `${bestComposition.role_pattern} | ` +
-    `${bestComposition.maps_played} Maps | ` +
-    `${(bestComposition.winrate * 100).toFixed(2)}% WR`;
+  renderAgentVisuals("teamHistoricalAgents", bestComposition.agents);
+  renderTeamPlaystyle(
+    "teamHistoricalPlaystyleBadge",
+    "teamHistoricalPlaystyleDescription",
+    bestComposition.playstyle,
+  );
+  setText("teamHistoricalRolePattern", bestComposition.role_pattern || "—");
+  setText(
+    "teamHistoricalMaps",
+    typeof bestComposition.maps_played === "number"
+      ? `${bestComposition.maps_played} Maps`
+      : "—",
+  );
+  setText(
+    "teamHistoricalCompositionWinrate",
+    typeof bestComposition.winrate === "number"
+      ? `${(bestComposition.winrate * 100).toFixed(2)}% WR`
+      : "—",
+  );
+  setText(
+    "teamHistoricalCompositionStrength",
+    typeof bestComposition.composition_strength === "number"
+      ? `Strength ${bestComposition.composition_strength.toFixed(2)}`
+      : "—",
+  );
+}
+
+function renderTeamPlaystyle(badgeId, descriptionId, playstyle) {
+  const badge = document.getElementById(badgeId);
+  const description = document.getElementById(descriptionId);
+
+  if (!playstyle?.name) {
+    if (badge) {
+      badge.textContent = "—";
+      badge.className =
+        "playstyle-badge team-playstyle-badge playstyle-unclassified";
+    }
+    if (description) description.textContent = "Belum ada informasi playstyle.";
+    return;
+  }
+
+  const name = String(playstyle.name).toUpperCase();
+  const className = `playstyle-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+  if (badge) {
+    badge.textContent = name;
+    badge.className = `playstyle-badge team-playstyle-badge ${className}`;
+  }
+
+  if (description) {
+    description.textContent =
+      playstyle.description || "Tidak ada deskripsi playstyle.";
+  }
+}
+
+function renderAgentVisuals(containerId, agentNames = []) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  agentNames.forEach((name) => {
+    const agent = agentData.find(
+      (item) => item.name.toLowerCase() === String(name).toLowerCase(),
+    );
+
+    if (!agent) {
+      logger.warn("Agent visual data not found.", name);
+      return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "team-agent-visual";
+    wrapper.title = capitalize(agent.name);
+
+    const image = document.createElement("img");
+    image.src = agent.url;
+    image.alt = capitalize(agent.name);
+    image.loading = "lazy";
+
+    const label = document.createElement("span");
+    label.textContent = capitalize(agent.name);
+
+    wrapper.append(image, label);
+    container.appendChild(wrapper);
+  });
 }
 
 function renderTeamInference(inference) {
   const element = document.getElementById("teamFeatureCount");
-
-  if (!element) {
-    return;
-  }
+  if (!element) return;
 
   element.textContent = inference?.feature_count
     ? `${inference.feature_count} features digunakan model`
     : "—";
 }
 
-function capitalize(value) {
-  if (!value) {
-    return "";
-  }
+function setText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value;
+}
 
+function formatPercent(value) {
+  return `${Number(value).toFixed(2)}%`;
+}
+
+function formatConfidence(level) {
+  if (!level) return "—";
+
+  const normalized = String(level).toLowerCase();
+
+  const labels = {
+    high: "HIGH",
+    medium: "MEDIUM",
+    low: "LOW",
+  };
+
+  return labels[normalized] || String(level).toUpperCase();
+}
+
+function capitalize(value) {
+  if (!value) return "";
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
