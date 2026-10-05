@@ -912,6 +912,7 @@ main.container {
 
 .inputPick > div:last-child {
   border-right: none;
+  flex: 2;
 }
 
 .inputPick > div:hover {

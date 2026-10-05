@@ -174,12 +174,12 @@
 
   .gauge-wrapper {
     width: 190px;
-    height: 130px;
+    height: 145px;
   }
 
   .gauge-svg {
-    width: 190px;
-    height: 105px;
+    width: 180px;
+    height: 115px;
   }
 
   .gauge-center {
@@ -187,7 +187,8 @@
   }
 
   .gauge-status {
-    font-size: 21px;
+    font-size: 18px;
+    max-width: 155px;
   }
 
   /* ---------- Error ---------- */
@@ -275,5 +276,74 @@
     font-size: 12px;
 
     padding: 4px 7px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gauge-wrapper {
+    width: 190px;
+    height: 130px;
+  }
+
+  .gauge-svg {
+    width: 180px;
+    height: 95px;
+  }
+
+  .gauge-center {
+    bottom: 12px;
+  }
+
+  .gauge-status {
+    font-size: 16px;
+    max-width: 155px;
+  }
+
+  .team-agent-list {
+    gap: 4px;
+  }
+
+  .team-agent-visual {
+    width: 54px;
+  }
+
+  .team-agent-visual img,
+  .team-agent-placeholder {
+    width: 50px;
+    height: 60px;
+  }
+
+  .team-agent-visual span {
+    max-width: 54px;
+    font-size: 8px;
+  }
+
+  .team-prediction-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .team-prediction-meta > div + div {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .team-history-analysis {
+    grid-template-columns: 1fr;
+  }
+
+  .team-history-analysis > div,
+  .team-history-analysis > div:nth-child(n + 3) {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .team-history-analysis > div:first-child {
+    border-top: none;
+  }
+
+  .team-composition-section,
+  .team-context-section {
+    padding-left: 14px;
+    padding-right: 14px;
   }
 }
