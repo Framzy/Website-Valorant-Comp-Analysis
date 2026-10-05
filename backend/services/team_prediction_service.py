@@ -35,6 +35,7 @@ from backend.config import (
 from backend.constants import (
     EXPECTED_FEATURE_COUNT,
     AGENT_ROLE_MAP,
+    PLAYSTYLE_MAP,
 )
 
 from backend.ml.team.inference_feature_builder import (
@@ -504,6 +505,52 @@ class TeamPredictionService:
             )
 
         return sorted(str(team) for team in eligible.index if pd.notna(team))
+    
+    
+    def get_playstyle(self, pattern: str) -> dict:
+        """
+        Determine playstyle from role pattern.
+        """
+        pattern = str(pattern).upper().strip()
+
+        name = PLAYSTYLE_MAP.get(
+            pattern,
+            "UNCLASSIFIED",
+        )
+
+        match name:
+            case "STANDARD":
+                desc = (
+                    "Team ini menggunakan gaya main standar, dengan komposisi yang seimbang dan fleksibel."
+                )
+
+            case "CONTROL":
+                desc = (
+                    "Team ini mengutamakan kontrol area dan penggunaan smoke/utility untuk mengatur tempo permainan."
+                )
+
+            case "AGGRESSIVE":
+                desc = (
+                    "Team ini mengandalkan dua duelist yang saling berkoordinasi untuk bisa clearing site."
+                )
+
+            case "UTILITY_HEAVY":
+                desc = (
+                    "Team ini mengandalkan penggunaan utility yang tepat untuk menguasai permainan."
+                )
+
+            case _:
+                desc = (
+                    "Komposisi ini memiliki role pattern yang belum "
+                    "diklasifikasikan ke dalam playstyle tertentu,"
+                    "karena memiliki pattern yang tidak seimbang dan jarang dimainkan."
+                )
+
+        return {
+            "pattern": pattern,
+            "description": desc,
+            "name": name,
+    }
 
         # ========================================================
     # BEST HISTORICAL COMPOSITION
@@ -563,6 +610,8 @@ class TeamPredictionService:
         winrate = float(
             row["Winrate"]
         )
+        
+        playstyle = self.get_playstyle(str(row["Role Pattern"]))
 
         return {
             "found": True,
@@ -570,6 +619,7 @@ class TeamPredictionService:
             "role_pattern": str(
                 row["Role Pattern"]
             ),
+            "playstyle": playstyle,
             "maps_played": int(
                 row["Total Maps Played"]
             ),
@@ -664,6 +714,8 @@ class TeamPredictionService:
             "level": blended_range["level"],
         }
 
+        playstyle = self.get_playstyle(str(prepared.iloc[0]["Role Pattern"]))
+
         return {
             "input": {
                 "team": team,
@@ -696,6 +748,7 @@ class TeamPredictionService:
                 "initiator_count": int(prepared.iloc[0]["Initiator Count"]),
                 "controller_count": int(prepared.iloc[0]["Controller Count"]),
                 "sentinel_count": int(prepared.iloc[0]["Sentinel Count"]),
+                "playstyle": playstyle,
             },
             "historical": {
                 "found": historical_found,
