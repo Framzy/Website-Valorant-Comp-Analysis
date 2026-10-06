@@ -27,25 +27,25 @@ import pandas as pd
 from pathlib import Path
 from typing import Iterable
 
-from backend.config import (
+from development.backend.config import (
     TEAM_DATASET_PATH,
     MODEL_TEAM_DIR,
 )
 
-from backend.constants import (
+from development.backend.constants import (
     EXPECTED_FEATURE_COUNT,
     AGENT_ROLE_MAP,
     PLAYSTYLE_MAP,
 )
 
-from backend.ml.team.inference_feature_builder import (
+from development.backend.ml.team.inference_feature_builder import (
     calculate_composition_strength,
     find_exact_composition,
     prepare_inference_row,
     normalize_agents,
 )
-from backend.ml.team.feature_encoder import encode_features
-from backend.ml.team.comp_strength_hierarchy import strength_for_new_row
+from development.backend.ml.team.feature_encoder import encode_features
+from development.backend.ml.team.comp_strength_hierarchy import strength_for_new_row
 
 # Used only if metadata.json has no "blend" section (older model artifacts).
 DEFAULT_BLEND = {

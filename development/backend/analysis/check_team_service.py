@@ -9,8 +9,8 @@ the SAME role cannot move the prediction by more than lambda * 2 * cap.
 """
 import random
 
-from backend.constants import AGENT_ROLE_MAP
-from backend.services.team_prediction_service import TeamPredictionService
+from development.backend.constants import AGENT_ROLE_MAP
+from development.backend.services.team_prediction_service import TeamPredictionService
 
 LEGACY_KEYS = {"input", "prediction", "composition", "historical", "inference"}
 NEW_KEYS = {"confidence"}

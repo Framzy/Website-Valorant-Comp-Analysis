@@ -34,7 +34,7 @@ import pandas as pd
 # CONTRACT
 # ============================================================
 
-from backend.constants import (
+from development.backend.constants import (
     EXPECTED_FEATURE_COUNT,
 )
 

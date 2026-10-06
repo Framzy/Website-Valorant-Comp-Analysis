@@ -2,9 +2,9 @@ from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from backend.services.shared_options_service import SharedOptionsService
-from backend.services.general_analysis_service import GeneralAnalysisService
-from backend.services.team_prediction_service import TeamPredictionService
+from development.backend.services.shared_options_service import SharedOptionsService
+from development.backend.services.general_analysis_service import GeneralAnalysisService
+from development.backend.services.team_prediction_service import TeamPredictionService
 
 
 # ============================================================

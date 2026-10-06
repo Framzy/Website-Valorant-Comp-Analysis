@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from backend.config import GENERAL_DATASET_PATH
-from backend.constants import (
+from development.backend.config import GENERAL_DATASET_PATH
+from development.backend.constants import (
     AGENT_ROLES,
     PLAYSTYLE_MAP,
 )

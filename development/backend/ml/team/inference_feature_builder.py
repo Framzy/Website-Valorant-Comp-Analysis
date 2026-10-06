@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import ast
 
-from backend.ml.team.comp_strength_hierarchy import strength_for_new_row
+from development.backend.ml.team.comp_strength_hierarchy import strength_for_new_row
 from pathlib import Path
 from typing import Iterable
 
