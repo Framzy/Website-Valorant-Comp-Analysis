@@ -1,7 +1,6 @@
-from pathlib import Path
-
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+
 from backend.services.shared_options_service import SharedOptionsService
 from backend.services.general_analysis_service import GeneralAnalysisService
 from backend.services.team_prediction_service import TeamPredictionService
@@ -11,15 +10,10 @@ from backend.services.team_prediction_service import TeamPredictionService
 # APP CONFIGURATION
 # ============================================================
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend" / "app"
-
-app = Flask(
-    __name__,
-    static_folder=str(FRONTEND_DIR),
-    template_folder=str(FRONTEND_DIR),
-)
+app = Flask(__name__)
 
 CORS(app)
+
 
 # ============================================================
 # SERVICES
@@ -206,21 +200,8 @@ def predict_team():
 
 
 # ============================================================
-# FRONTEND
-# ============================================================
-
-@app.get("/")
-def serve_frontend():
-    """Serve the frontend application."""
-    return send_from_directory(
-        FRONTEND_DIR,
-        "index.html",
-    )
-
-
-# ============================================================
 # ENTRY POINT
 # ============================================================
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000) #Run the Flask app on all available network interfaces, port 5000, for normal (debug=true)
+    app.run()
