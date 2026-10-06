@@ -1,0 +1,133 @@
+/* =========================================================
+   1. RESET & DESIGN TOKENS
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* ---------- Brand ---------- */
+  --red: #ff4655;
+  --red-dark: #c0192a;
+  --red-light: #ff6b76;
+
+  --red-glow: rgba(255, 70, 85, 0.35);
+  --red-06: rgba(255, 70, 85, 0.06);
+  --red-10: rgba(255, 70, 85, 0.1);
+  --red-20: rgba(255, 70, 85, 0.2);
+  --red-30: rgba(255, 70, 85, 0.3);
+
+  /* ---------- Background ---------- */
+  --bg-deep: #0d1b26;
+  --bg-main: #111f2d;
+  --bg-card: #162432;
+  --bg-dark: #0a161f;
+  --bg-glass: rgba(22, 36, 50, 0.85);
+
+  /* ---------- Border ---------- */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.15);
+
+  /* ---------- Text ---------- */
+  --text-primary: #e8edf2;
+  --text-secondary: #8fa3b3;
+  --text-muted: #4d6070;
+
+  /* ---------- Fonts ---------- */
+  --font-heading: "Rajdhani", sans-serif;
+  --font-body: "Inter", sans-serif;
+
+  /* ---------- Radius ---------- */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-container: 24px;
+
+  /* ---------- Shadows ---------- */
+  --shadow-card: 0 12px 28px rgba(0, 0, 0, 0.5);
+
+  --shadow-container: 0 24px 80px rgba(0, 0, 0, 0.6);
+
+  --shadow-red: 0 0 30px rgba(255, 70, 85, 0.4);
+}
+
+/* =========================================================
+   2. BASE
+   ========================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+
+  background-color: var(--bg-deep);
+
+  background-image:
+    radial-gradient(
+      ellipse at 20% 0%,
+      rgba(255, 70, 85, 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 100%,
+      rgba(255, 70, 85, 0.06) 0%,
+      transparent 50%
+    );
+
+  font-family: var(--font-body);
+  color: var(--text-primary);
+
+  overflow-x: hidden;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   31. SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 70, 85, 0.4);
+
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--red);
+}
