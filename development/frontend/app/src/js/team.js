@@ -7,6 +7,7 @@ import {
   showLoading,
   showResults,
   revealResults,
+  renderRolePattern,
 } from "./ui.js";
 import { logger } from "./logger.js";
 import $ from "jquery";
@@ -44,7 +45,7 @@ export async function handleTeamAction() {
     logger.error("Team prediction failed.", error);
 
     showError(
-      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
+      error.apiInfo?.message ||
         error.response?.data?.message ||
         error.response?.data?.error ||
         "Gagal melakukan prediksi. Silakan coba lagi.",
@@ -234,6 +235,8 @@ function renderTeamHistorical(historical) {
 }
 
 function renderTeamComposition(composition) {
+  const rolePattern = document.getElementById("teamRolePattern");
+
   if (!composition) return;
 
   renderTeamPlaystyle(
@@ -241,26 +244,11 @@ function renderTeamComposition(composition) {
     "teamPlaystyleDescription",
     composition.playstyle,
   );
-  setText("teamRolePattern", composition.role_pattern || "—");
 
-  const container = document.getElementById("teamRoleComposition");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const roles = [
-    ["Duelist", composition.duelist_count, "duelist"],
-    ["Initiator", composition.initiator_count, "initiator"],
-    ["Controller", composition.controller_count, "controller"],
-    ["Sentinel", composition.sentinel_count, "sentinel"],
-  ];
-
-  roles.forEach(([label, count, role]) => {
-    const chip = document.createElement("span");
-    chip.className = `team-role-chip team-role-${role}`;
-    chip.textContent = `${label} ×${count}`;
-    container.appendChild(chip);
-  });
+  const pattern = composition?.role_pattern || "—";
+  if (rolePattern) {
+    renderRolePattern(rolePattern, pattern);
+  }
 }
 
 function renderTeamSelectedAgents(agentNames) {
@@ -302,6 +290,7 @@ function renderTeamPredictionContext(prediction, confidence) {
 
 function renderTeamBestComposition(bestComposition) {
   const section = document.getElementById("teamHistoricalSection");
+  const rolePattern = document.getElementById("teamHistoricalRolePattern");
 
   if (!bestComposition?.found) {
     if (section) section.classList.add("no-data");
@@ -311,7 +300,6 @@ function renderTeamBestComposition(bestComposition) {
       "teamHistoricalPlaystyleDescription",
       null,
     );
-    setText("teamHistoricalRolePattern", "—");
     setText("teamHistoricalMaps", "Belum ada data");
     setText("teamHistoricalCompositionWinrate", "—");
     setText("teamHistoricalCompositionStrength", "—");
@@ -320,13 +308,19 @@ function renderTeamBestComposition(bestComposition) {
 
   if (section) section.classList.remove("no-data");
 
+  const pattern = bestComposition?.role_pattern || "—";
+
   renderAgentVisuals("teamHistoricalAgents", bestComposition.agents);
   renderTeamPlaystyle(
     "teamHistoricalPlaystyleBadge",
     "teamHistoricalPlaystyleDescription",
     bestComposition.playstyle,
   );
-  setText("teamHistoricalRolePattern", bestComposition.role_pattern || "—");
+
+  if (rolePattern) {
+    renderRolePattern(rolePattern, pattern);
+  }
+
   setText(
     "teamHistoricalMaps",
     typeof bestComposition.maps_played === "number"
@@ -409,7 +403,7 @@ function renderAgentVisuals(containerId, agentNames = []) {
 
 function renderTeamInference(inference) {
   const $element = $("#teamFeatureCount");
-  if (!$element) return;
+  if (!$element.length) return;
 
   $element.text(
     inference?.feature_count
