@@ -21,14 +21,15 @@ function getApiErrorInfo(error) {
       return {
         type: "timeout",
         status: null,
-        message: "Request membutuhkan waktu terlalu lama.",
+        message: "Request membutuhkan waktu terlalu lama. Silakan coba lagi.",
       };
     }
 
     return {
       type: "network",
       status: null,
-      message: "Tidak dapat terhubung ke server.",
+      message:
+        "Tidak dapat terhubung ke server. Silakan tunggu beberapa saat dan coba lagi.",
     };
   }
 
@@ -39,21 +40,22 @@ function getApiErrorInfo(error) {
       return {
         type: "http",
         status,
-        message: "Permintaan tidak valid.",
+        message: "Permintaan tidak valid. Silakan periksa input Anda.",
       };
 
     case 404:
       return {
         type: "http",
         status,
-        message: "Data atau endpoint tidak ditemukan.",
+        message:
+          "Data atau endpoint tidak ditemukan. Silakan periksa input Anda.",
       };
 
     case 408:
       return {
         type: "http",
         status,
-        message: "Request membutuhkan waktu terlalu lama.",
+        message: "Request membutuhkan waktu terlalu lama. Silakan coba lagi.",
       };
 
     case 429:
@@ -67,7 +69,7 @@ function getApiErrorInfo(error) {
       return {
         type: "http",
         status,
-        message: "Terjadi kesalahan pada server.",
+        message: "Terjadi kesalahan pada server. Silakan coba lagi nanti.",
       };
 
     case 502:
