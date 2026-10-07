@@ -26,7 +26,11 @@
            HEADER
       ====================================================== -->
       <section class="logo">
-        <img src="/src/assets/logo_valorant.png" alt="Valorant Logo" />
+        <img
+          src="/src/assets/logo_valorant.png"
+          alt="Valorant Logo"
+          fetchpriority="high"
+        />
 
         <p>Agent Comp Analyze</p>
       </section>
@@ -387,13 +391,6 @@
                     <span class="detail-title">Role Pattern</span>
                     <p class="detail-value" id="teamRolePattern">—</p>
                   </div>
-
-                  <div class="team-analysis-block">
-                    <span class="detail-title">Komposisi Role</span>
-                    <div class="role-pattern-value" id="teamRoleComposition">
-                      —
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -473,6 +470,13 @@
                 <p class="combo-value" id="teamFeatureCount">—</p>
               </div>
             </div>
+          </div>
+          <div class="last-data-updated">
+            <p class="data-label">Last Data Updated</p>
+            <p class="data-value" id="dataYearUpdated">—</p>
+          </div>
+          <div class="copyright-info">
+            <p>© <span id="currentYear"></span> Framzy. All rights reserved.</p>
           </div>
         </div>
       </section>
