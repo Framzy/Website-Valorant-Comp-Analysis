@@ -56,6 +56,10 @@ async function loadAvailableYears() {
     populateSelect(document.getElementById("year"), years, "— Pilih Tahun —");
   } catch (error) {
     logger.error("Failed to load available years.", error);
+    showError(
+      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
+        "Gagal memuat data tahun. Silakan coba lagi.",
+    );
   }
 }
 
@@ -186,6 +190,10 @@ async function handleYearChange(event) {
     populateSelect(document.getElementById("map"), maps, "— Pilih Map —");
   } catch (error) {
     logger.error("Failed to load maps.", error);
+    showError(
+      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
+        "Gagal memuat data map. Silakan coba lagi.",
+    );
   }
 }
 
@@ -224,6 +232,11 @@ async function handleMapChange(event) {
     populateSelect(document.getElementById("team"), teams, "— Pilih Tim —");
   } catch (error) {
     logger.error("Failed to load teams.", error);
+
+    showError(
+      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
+        "Gagal memuat data tim. Silakan coba lagi.",
+    );
   }
 }
 
