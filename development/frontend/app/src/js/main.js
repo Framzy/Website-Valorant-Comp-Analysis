@@ -36,6 +36,10 @@ function init() {
 
   loadAvailableYears();
 
+  loadDataLastUpdated();
+
+  updateCurrentYear();
+
   updateModeUI(state.currentMode);
 
   logger.info("Application initialization completed.", {
@@ -54,15 +58,41 @@ async function loadAvailableYears() {
     const years = await getAvailableYears();
 
     logger.info("Available years loaded.", years);
+    const latestYear = years.at(-1) || years[years.length - 1];
+
+    loadDataLastUpdated(latestYear);
 
     populateSelect(document.getElementById("year"), years, "— Pilih Tahun —");
   } catch (error) {
     logger.error("Failed to load available years.", error);
     showError(
-      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
-        "Gagal memuat data tahun. Silakan coba lagi.",
+      error.apiInfo?.message || "Gagal memuat data tahun. Silakan coba lagi.",
     );
   }
+}
+
+function loadDataLastUpdated(year) {
+  const lastUpdatedElement = document.getElementById("dataYearUpdated");
+
+  if (!lastUpdatedElement) {
+    logger.warn("Last data updated element not found.");
+    return;
+  }
+
+  const latestDataYear = year || "—";
+  lastUpdatedElement.textContent = latestDataYear;
+}
+
+function updateCurrentYear() {
+  const currentYearElement = document.getElementById("currentYear");
+
+  if (!currentYearElement) {
+    logger.warn("Current year element not found.");
+    return;
+  }
+
+  const currentYear = new Date().getFullYear();
+  currentYearElement.textContent = currentYear;
 }
 
 /* =========================================================
@@ -169,8 +199,7 @@ async function handleYearChange(event) {
   } catch (error) {
     logger.error("Failed to load maps.", error);
     showError(
-      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
-        "Gagal memuat data map. Silakan coba lagi.",
+      error.apiInfo?.message || "Gagal memuat data map. Silakan coba lagi.",
     );
   }
 }
@@ -212,8 +241,7 @@ async function handleMapChange(event) {
     logger.error("Failed to load teams.", error);
 
     showError(
-      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
-        "Gagal memuat data tim. Silakan coba lagi.",
+      error.apiInfo?.message || "Gagal memuat data tim. Silakan coba lagi.",
     );
   }
 }
