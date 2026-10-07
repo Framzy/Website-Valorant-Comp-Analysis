@@ -758,7 +758,7 @@ main.container {
   padding-bottom: 2px;
 }
 
-.btn-predict {
+.btn-analyze {
   padding: 11px 32px;
 
   border: none;
@@ -791,7 +791,7 @@ main.container {
     background 0.2s ease;
 }
 
-.btn-predict::before {
+.btn-analyze::before {
   content: "";
 
   position: absolute;
@@ -805,7 +805,7 @@ main.container {
   transition: opacity 0.2s ease;
 }
 
-.btn-predict:hover {
+.btn-analyze:hover {
   transform: translateY(-2px);
 
   box-shadow: 0 8px 28px rgba(255, 70, 85, 0.5);
@@ -813,11 +813,11 @@ main.container {
   background: linear-gradient(135deg, #ff5f6d, #d41e30);
 }
 
-.btn-predict:hover::before {
+.btn-analyze:hover::before {
   opacity: 1;
 }
 
-.btn-predict:active {
+.btn-analyze:active {
   transform: translateY(0);
 
   box-shadow: 0 2px 10px rgba(255, 70, 85, 0.3);
