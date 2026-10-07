@@ -7,8 +7,10 @@ import {
   showLoading,
   showResults,
   revealResults,
+  renderRolePattern,
 } from "./ui.js";
 import { logger } from "./logger.js";
+import $ from "jquery";
 
 export async function handleTeamAction() {
   logger.info("Team prediction requested.");
@@ -43,7 +45,9 @@ export async function handleTeamAction() {
     logger.error("Team prediction failed.", error);
 
     showError(
-      error.response?.data?.message ||
+      error.apiInfo?.message ||
+        error.response?.data?.message ||
+        error.response?.data?.error ||
         "Gagal melakukan prediksi. Silakan coba lagi.",
     );
   } finally {
@@ -163,7 +167,6 @@ function updateTeamGauge(percentage, conclusion) {
   const section = document.getElementById("teamGaugeSection");
   const fill = document.getElementById("teamGaugeFill");
   const status = document.getElementById("teamGaugeStatus");
-  const subText = document.getElementById("teamGaugeSubText");
   const reason = document.getElementById("teamConclusionReason");
 
   if (section) {
@@ -232,6 +235,8 @@ function renderTeamHistorical(historical) {
 }
 
 function renderTeamComposition(composition) {
+  const rolePattern = document.getElementById("teamRolePattern");
+
   if (!composition) return;
 
   renderTeamPlaystyle(
@@ -239,26 +244,11 @@ function renderTeamComposition(composition) {
     "teamPlaystyleDescription",
     composition.playstyle,
   );
-  setText("teamRolePattern", composition.role_pattern || "—");
 
-  const container = document.getElementById("teamRoleComposition");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const roles = [
-    ["Duelist", composition.duelist_count, "duelist"],
-    ["Initiator", composition.initiator_count, "initiator"],
-    ["Controller", composition.controller_count, "controller"],
-    ["Sentinel", composition.sentinel_count, "sentinel"],
-  ];
-
-  roles.forEach(([label, count, role]) => {
-    const chip = document.createElement("span");
-    chip.className = `team-role-chip team-role-${role}`;
-    chip.textContent = `${label} ×${count}`;
-    container.appendChild(chip);
-  });
+  const pattern = composition?.role_pattern || "—";
+  if (rolePattern) {
+    renderRolePattern(rolePattern, pattern);
+  }
 }
 
 function renderTeamSelectedAgents(agentNames) {
@@ -300,6 +290,7 @@ function renderTeamPredictionContext(prediction, confidence) {
 
 function renderTeamBestComposition(bestComposition) {
   const section = document.getElementById("teamHistoricalSection");
+  const rolePattern = document.getElementById("teamHistoricalRolePattern");
 
   if (!bestComposition?.found) {
     if (section) section.classList.add("no-data");
@@ -309,7 +300,6 @@ function renderTeamBestComposition(bestComposition) {
       "teamHistoricalPlaystyleDescription",
       null,
     );
-    setText("teamHistoricalRolePattern", "—");
     setText("teamHistoricalMaps", "Belum ada data");
     setText("teamHistoricalCompositionWinrate", "—");
     setText("teamHistoricalCompositionStrength", "—");
@@ -318,13 +308,19 @@ function renderTeamBestComposition(bestComposition) {
 
   if (section) section.classList.remove("no-data");
 
+  const pattern = bestComposition?.role_pattern || "—";
+
   renderAgentVisuals("teamHistoricalAgents", bestComposition.agents);
   renderTeamPlaystyle(
     "teamHistoricalPlaystyleBadge",
     "teamHistoricalPlaystyleDescription",
     bestComposition.playstyle,
   );
-  setText("teamHistoricalRolePattern", bestComposition.role_pattern || "—");
+
+  if (rolePattern) {
+    renderRolePattern(rolePattern, pattern);
+  }
+
   setText(
     "teamHistoricalMaps",
     typeof bestComposition.maps_played === "number"
@@ -346,38 +342,37 @@ function renderTeamBestComposition(bestComposition) {
 }
 
 function renderTeamPlaystyle(badgeId, descriptionId, playstyle) {
-  const badge = document.getElementById(badgeId);
-  const description = document.getElementById(descriptionId);
+  const $badge = $(`#${badgeId}`);
+  const $description = $(`#${descriptionId}`);
 
   if (!playstyle?.name) {
-    if (badge) {
-      badge.textContent = "—";
-      badge.className =
-        "playstyle-badge team-playstyle-badge playstyle-unclassified";
-    }
-    if (description) description.textContent = "Belum ada informasi playstyle.";
+    $badge
+      .text("—")
+      .attr(
+        "class",
+        "playstyle-badge team-playstyle-badge playstyle-unclassified",
+      );
+    $description.text("Belum ada informasi playstyle.");
     return;
   }
 
   const name = String(playstyle.name).toUpperCase();
   const className = `playstyle-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
-  if (badge) {
-    badge.textContent = name;
-    badge.className = `playstyle-badge team-playstyle-badge ${className}`;
-  }
+  $badge
+    .text(name)
+    .attr("class", `playstyle-badge team-playstyle-badge ${className}`);
 
-  if (description) {
-    description.textContent =
-      playstyle.description || "Tidak ada deskripsi playstyle.";
-  }
+  $description.text(
+    playstyle.description || "Tidak ada deskripsi playstyle yang tersedia.",
+  );
 }
 
 function renderAgentVisuals(containerId, agentNames = []) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
+  const $container = $(`#${containerId}`);
+  if (!$container.length) return;
 
-  container.innerHTML = "";
+  $container.empty();
 
   agentNames.forEach((name) => {
     const agent = agentData.find(
@@ -402,22 +397,23 @@ function renderAgentVisuals(containerId, agentNames = []) {
     label.textContent = capitalize(agent.name);
 
     wrapper.append(image, label);
-    container.appendChild(wrapper);
+    $container.append(wrapper);
   });
 }
 
 function renderTeamInference(inference) {
-  const element = document.getElementById("teamFeatureCount");
-  if (!element) return;
+  const $element = $("#teamFeatureCount");
+  if (!$element.length) return;
 
-  element.textContent = inference?.feature_count
-    ? `${inference.feature_count} features digunakan model`
-    : "—";
+  $element.text(
+    inference?.feature_count
+      ? `${inference.feature_count} features digunakan model`
+      : "—",
+  );
 }
 
 function setText(id, value) {
-  const element = document.getElementById(id);
-  if (element) element.textContent = value;
+  $(`#${id}`).text(value);
 }
 
 function formatPercent(value) {

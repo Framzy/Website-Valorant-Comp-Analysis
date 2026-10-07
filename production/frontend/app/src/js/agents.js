@@ -1,6 +1,7 @@
 import { agents } from "../data/agent.js";
 import { state } from "./state.js";
 import { logger } from "./logger.js";
+import $ from "jquery";
 
 export function initAgents() {
   logger.info("Initializing agent system.");
@@ -12,6 +13,7 @@ export function initAgents() {
   });
 
   renderAgents();
+  initAgentEvents();
   initRoleFilter();
 
   updateAgentCounter();
@@ -68,11 +70,6 @@ function createAgentElement(agent) {
   name.textContent = capitalize(agent.name);
 
   wrapper.appendChild(name);
-
-  // Selection
-  wrapper.addEventListener("click", () => {
-    toggleAgent(agent.name, wrapper);
-  });
 
   return wrapper;
 }
@@ -138,16 +135,20 @@ function updateSelectedAgentSummary() {
   }
 }
 
+function initAgentEvents() {
+  $("#Agent").on("click", ".agent-item", function () {
+    const agentName = $(this).data("name");
+
+    toggleAgent(agentName, this);
+  });
+}
+
 function initRoleFilter() {
-  const tabs = document.querySelectorAll(".role-tab");
+  $(".role-tab").on("click", function () {
+    const role = $(this).data("role");
 
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const role = tab.dataset.role;
-
-      setActiveRoleTab(tab);
-      filterAgents(role);
-    });
+    setActiveRoleTab(this);
+    filterAgents(role);
   });
 }
 
@@ -170,9 +171,7 @@ function filterAgents(role) {
 export function resetAgents() {
   state.selectedAgents = [];
 
-  document
-    .querySelectorAll(".agent-item.selected")
-    .forEach((agent) => agent.classList.remove("selected"));
+  $(".agent-item.selected").removeClass("selected");
 
   resetRoleFilter();
 

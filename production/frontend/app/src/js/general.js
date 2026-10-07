@@ -7,8 +7,10 @@ import {
   showLoading,
   showResults,
   revealResults,
+  renderRolePattern,
 } from "./ui.js";
 import { logger } from "./logger.js";
+import $ from "jquery";
 
 export async function handleGeneralAction() {
   logger.info("General analysis requested.");
@@ -44,7 +46,8 @@ export async function handleGeneralAction() {
     logger.error("General analysis failed.", error);
 
     showError(
-      error.response?.data?.message ||
+      error.apiInfo?.message ||
+        error.response?.data?.message ||
         error.response?.data?.error ||
         "Gagal melakukan analisis. Silakan coba lagi.",
     );
@@ -97,32 +100,39 @@ function renderGeneralResult(result) {
 }
 
 function renderGeneralSummary(result) {
-  const header = document.querySelector("#generalResult .result-header");
-  const element = document.getElementById("generalResultSummary");
+  const $header = $("#generalResult .result-header");
+  const $element = $("#generalResultSummary");
 
-  if (element) {
-    element.textContent =
-      `${result?.input?.map || "—"} • ` +
-      `${result?.input?.year || "—"} • 5 Agents`;
-  }
+  $element.text(
+    `${result?.input?.map || "—"} • ` +
+      `${result?.input?.year || "—"} • 5 Agents`,
+  );
 
-  if (!header) {
+  if (!$header.length) {
     return;
   }
 
-  let agentVisual = header.querySelector(".general-result-agents");
+  let $agentVisual = $header.find(".general-result-agents");
 
-  if (!agentVisual) {
-    agentVisual = document.createElement("div");
-    agentVisual.className = "general-result-agents reveal-item";
-    header.appendChild(agentVisual);
+  if (!$agentVisual.length) {
+    $agentVisual = $("<div>", {
+      class: "general-result-agents reveal-item",
+    });
+
+    $header.append($agentVisual);
   }
 
-  renderAgentImages(agentVisual, result?.input?.agents);
+  renderAgentImages($agentVisual, result?.input?.agents);
 }
 
 function renderAgentImages(container, agentNames) {
-  container.innerHTML = "";
+  const $container = $(container);
+
+  if (!$container.length) {
+    return;
+  }
+
+  $container.empty();
 
   if (!Array.isArray(agentNames) || agentNames.length === 0) {
     return;
@@ -147,37 +157,32 @@ function renderAgentImages(container, agentNames) {
     label.textContent = capitalize(name);
     item.appendChild(label);
 
-    container.appendChild(item);
+    $container.append(item);
   });
 }
 
 function renderGeneralHistorical(historical) {
-  const pickRate = document.getElementById("generalPickRate");
-  const winrate = document.getElementById("generalWinrate");
-  const totalMaps = document.getElementById("generalTotalMaps");
+  const $pickRate = $("#generalPickRate");
+  const $winrate = $("#generalWinrate");
+  const $totalMaps = $("#generalTotalMaps");
 
   const found = Boolean(historical?.found);
 
-  if (pickRate) {
-    pickRate.textContent =
-      found && typeof historical?.pick_rate === "number"
-        ? `${(historical.pick_rate * 100).toFixed(2)}%`
-        : "—";
-  }
+  $pickRate.text(
+    found && typeof historical?.pick_rate === "number"
+      ? `${(historical.pick_rate * 100).toFixed(2)}%`
+      : "—",
+  );
 
-  if (winrate) {
-    winrate.textContent =
-      found && typeof historical?.winrate === "number"
-        ? `${(historical.winrate * 100).toFixed(2)}%`
-        : "—";
-  }
+  $winrate.text(
+    found && typeof historical?.winrate === "number"
+      ? `${(historical.winrate * 100).toFixed(2)}%`
+      : "—",
+  );
 
-  if (totalMaps) {
-    totalMaps.textContent =
-      found && historical?.total_maps !== undefined
-        ? historical.total_maps
-        : "—";
-  }
+  $totalMaps.text(
+    found && historical?.total_maps !== undefined ? historical.total_maps : "—",
+  );
 
   const statCards = document.querySelectorAll(
     "#generalResult .stat-cards .stat-card",
@@ -223,99 +228,51 @@ function renderGeneralPlaystyle(playstyle) {
   }
 }
 
-function renderRolePattern(element, pattern) {
-  element.innerHTML = "";
-
-  const counts = parseRolePattern(pattern);
-
-  if (!counts) {
-    element.textContent = pattern || "—";
-    element.className = "detail-value role-pattern-value";
-    return;
-  }
-
-  element.className = "detail-value role-pattern-value";
-
-  const roles = [
-    { key: "duelist", label: "Duelist" },
-    { key: "initiator", label: "Initiator" },
-    { key: "controller", label: "Controller" },
-    { key: "sentinel", label: "Sentinel" },
-  ];
-
-  roles.forEach(({ key, label }) => {
-    const chip = document.createElement("span");
-    chip.className = `role-pattern-chip role-pattern-${key}`;
-    chip.innerHTML = `
-      <span class="role-pattern-label">${label}</span>
-      <strong>${counts[key]}</strong>
-    `;
-    element.appendChild(chip);
-  });
-}
-
-function parseRolePattern(pattern) {
-  if (typeof pattern !== "string") {
-    return null;
-  }
-
-  const matches = pattern.match(/^(\d+)D-(\d+)I-(\d+)C-(\d+)S$/i);
-
-  if (!matches) {
-    return null;
-  }
-
-  return {
-    duelist: Number(matches[1]),
-    initiator: Number(matches[2]),
-    controller: Number(matches[3]),
-    sentinel: Number(matches[4]),
-  };
-}
-
 function renderGeneralFallback(result) {
-  const header = document.querySelector("#generalResult .result-header");
+  const $header = $("#generalResult .result-header");
 
-  if (!header) {
+  if (!$header.length) {
     return;
   }
 
-  let fallback = header.querySelector(".general-fallback");
+  let $fallback = $header.find(".general-fallback");
 
   if (!result?.fallback) {
-    fallback?.remove();
+    $fallback.remove();
     return;
   }
 
-  if (!fallback) {
-    fallback = document.createElement("div");
-    fallback.className = "general-fallback reveal-item";
-    header.appendChild(fallback);
+  if (!$fallback.length) {
+    $fallback = $("<div>", {
+      class: "general-fallback reveal-item",
+    });
+
+    $header.append($fallback);
   }
 
-  fallback.innerHTML = `
+  $fallback.html(`
     <span class="general-fallback-badge">Historical composition tidak ditemukan</span>
     <span class="general-fallback-text">
       Rekomendasi menggunakan data ${formatFallbackSource(result.fallback_source)}.
     </span>
-  `;
+  `);
 }
 
 function renderGeneralRecommendations(recommendations) {
-  const container = document.getElementById("recommendationsList");
+  const $container = $("#recommendationsList");
 
-  if (!container) {
+  if (!$container.length) {
     return;
   }
 
-  container.innerHTML = "";
+  $container.empty();
 
   if (!Array.isArray(recommendations) || recommendations.length === 0) {
-    container.innerHTML = `
+    $container.html(`
       <p class="combo-value">
         Belum ada historical recommendation.
       </p>
-    `;
+    `);
     return;
   }
 
@@ -360,7 +317,7 @@ function renderGeneralRecommendations(recommendations) {
     card.appendChild(info);
     card.appendChild(winrate);
 
-    container.appendChild(card);
+    $container.append(card);
   });
 }
 
