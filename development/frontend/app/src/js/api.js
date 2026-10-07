@@ -11,6 +11,83 @@ const api = axios.create({
   },
 });
 
+// ========================================================
+// API ERROR HANDLING
+// ========================================================
+
+function getApiErrorInfo(error) {
+  if (!error.response) {
+    if (error.code === "ECONNABORTED") {
+      return {
+        type: "timeout",
+        status: null,
+        message: "Request membutuhkan waktu terlalu lama.",
+      };
+    }
+
+    return {
+      type: "network",
+      status: null,
+      message: "Tidak dapat terhubung ke server.",
+    };
+  }
+
+  const status = error.response.status;
+
+  switch (status) {
+    case 400:
+      return {
+        type: "http",
+        status,
+        message: "Permintaan tidak valid.",
+      };
+
+    case 404:
+      return {
+        type: "http",
+        status,
+        message: "Data atau endpoint tidak ditemukan.",
+      };
+
+    case 408:
+      return {
+        type: "http",
+        status,
+        message: "Request membutuhkan waktu terlalu lama.",
+      };
+
+    case 429:
+      return {
+        type: "http",
+        status,
+        message: "Terlalu banyak permintaan. Silakan coba lagi nanti.",
+      };
+
+    case 500:
+      return {
+        type: "http",
+        status,
+        message: "Terjadi kesalahan pada server.",
+      };
+
+    case 502:
+    case 503:
+    case 504:
+      return {
+        type: "http",
+        status,
+        message: "Server sedang tidak tersedia. Silakan coba lagi nanti.",
+      };
+
+    default:
+      return {
+        type: "http",
+        status,
+        message: `Terjadi kesalahan pada server (${status}).`,
+      };
+  }
+}
+
 // =========================================================
 // REQUEST INTERCEPTOR
 // =========================================================
@@ -47,12 +124,18 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    const apiInfo = getApiErrorInfo(error);
+
     logger.error("API request failed.", {
-      status: error.response?.status,
+      status: apiInfo.status,
+      type: apiInfo.type,
       url: error.config?.url,
       data: error.response?.data,
-      message: error.message,
+      message: apiInfo.message,
+      axiosMessage: error.message,
     });
+
+    error.apiInfo = apiInfo;
 
     return Promise.reject(error);
   },
