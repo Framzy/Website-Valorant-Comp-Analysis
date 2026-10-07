@@ -17,6 +17,8 @@ import { handleTeamAction } from "./team.js";
 
 import { logger } from "./logger.js";
 
+import $ from "jquery";
+
 function init() {
   logger.info("Application initialization started.");
 
@@ -68,58 +70,40 @@ async function loadAvailableYears() {
    ========================================================= */
 
 function initModeTabs() {
-  const tabs = document.querySelectorAll(".mode-tab");
+  const $tabs = $(".mode-tab");
 
-  logger.debug(`Found ${tabs.length} mode tabs.`);
+  logger.debug(`Found ${$tabs.length} mode tabs.`);
 
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const mode = tab.dataset.mode;
+  $tabs.on("click", function () {
+    const mode = $(this).data("mode");
 
-      logger.debug("Mode tab clicked.", { mode });
+    logger.debug("Mode tab clicked.", { mode });
 
-      if (mode === state.currentMode) {
-        return;
-      }
+    if (mode === state.currentMode) {
+      return;
+    }
 
-      state.currentMode = mode;
+    state.currentMode = mode;
 
-      updateActiveTab(tab);
-      updateModeUI(mode);
-      hideModeResults();
-      handleReset();
+    updateActiveTab(this);
+    updateModeUI(mode);
+    hideModeResults();
+    handleReset();
 
-      logger.info(`Mode changed to: ${mode}`);
-    });
+    logger.info(`Mode changed to: ${mode}`);
   });
 }
 
 function updateActiveTab(activeTab) {
-  document
-    .querySelectorAll(".mode-tab")
-    .forEach((tab) => tab.classList.remove("active"));
-
-  activeTab.classList.add("active");
+  $(".mode-tab").removeClass("active");
+  $(activeTab).addClass("active");
 }
 
 function updateModeUI(mode) {
-  const teamField = document.getElementById("teamField");
-  const teamSummary = document.getElementById("teamSummary");
-  const actionButton = document.getElementById("btnAction");
-
   const isTeamMode = mode === "team";
 
-  if (teamField) {
-    teamField.style.display = isTeamMode ? "" : "none";
-  }
-
-  if (teamSummary) {
-    teamSummary.style.display = isTeamMode ? "" : "none";
-  }
-
-  if (actionButton) {
-    actionButton.textContent = isTeamMode ? "Prediksi" : "Analisis";
-  }
+  $("#teamField").toggle(isTeamMode);
+  $("#teamSummary").toggle(isTeamMode);
 
   logger.debug("Mode UI updated.", {
     mode,
@@ -137,26 +121,20 @@ function hideModeResults() {
    ========================================================= */
 
 function initSharedInputEvents() {
-  const year = document.getElementById("year");
-  const map = document.getElementById("map");
-  const team = document.getElementById("team");
-  const actionButton = document.getElementById("btnAction");
-  const resetButton = document.getElementById("btnReset");
+  $("#year").on("change", handleYearChange);
+  $("#map").on("change", handleMapChange);
+  $("#team").on("change", handleTeamChange);
+
+  $("#btnAction").on("click", handleAction);
+  $("#btnReset").on("click", handleReset);
 
   logger.debug("Shared input elements.", {
-    yearFound: Boolean(year),
-    mapFound: Boolean(map),
-    teamFound: Boolean(team),
-    actionButtonFound: Boolean(actionButton),
-    resetButtonFound: Boolean(resetButton),
+    yearFound: Boolean($("#year").length),
+    mapFound: Boolean($("#map").length),
+    teamFound: Boolean($("#team").length),
+    actionButtonFound: Boolean($("#btnAction").length),
+    resetButtonFound: Boolean($("#btnReset").length),
   });
-
-  year?.addEventListener("change", handleYearChange);
-  map?.addEventListener("change", handleMapChange);
-  team?.addEventListener("change", handleTeamChange);
-
-  actionButton?.addEventListener("click", handleAction);
-  resetButton?.addEventListener("click", handleReset);
 }
 
 /* =========================================================
@@ -292,62 +270,39 @@ function populateSelect(select, items, placeholder) {
     return;
   }
 
-  select.innerHTML = "";
+  const $select = $(select);
 
-  const placeholderOption = document.createElement("option");
-
-  placeholderOption.value = "";
-  placeholderOption.textContent = placeholder;
-  placeholderOption.hidden = true;
-
-  select.appendChild(placeholderOption);
+  $select.empty();
+  $select.append(
+    $("<option>", {
+      value: "",
+      text: placeholder,
+      hidden: true,
+    }),
+  );
 
   items.forEach((item) => {
-    const option = document.createElement("option");
-
-    option.value = item;
-    option.textContent = item;
-
-    select.appendChild(option);
+    $select.append(
+      $("<option>", {
+        value: item,
+        text: item,
+      }),
+    );
   });
 
-  select.value = "";
-
-  select.removeAttribute("disabled");
+  $select.val("").prop("disabled", false);
 }
 
 function resetYear() {
-  const year = document.getElementById("year");
-
-  if (!year) {
-    return;
-  }
-
-  year.value = "";
+  $("#year").val("");
 }
 
 function resetMap() {
-  const map = document.getElementById("map");
-
-  if (!map) {
-    return;
-  }
-
-  map.innerHTML = '<option value="" hidden>— Pilih Map —</option>';
-  map.value = "";
-  map.setAttribute("disabled", "");
+  $("#map").val("").attr("disabled", true);
 }
 
 function resetTeam() {
-  const team = document.getElementById("team");
-
-  if (!team) {
-    return;
-  }
-
-  team.innerHTML = '<option value="" hidden>— Pilih Tim —</option>';
-  team.value = "";
-  team.setAttribute("disabled", "");
+  $("#team").val("").attr("disabled", true);
 }
 
 /* =========================================================
