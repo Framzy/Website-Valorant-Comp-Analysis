@@ -1,7 +1,11 @@
-const PREFIX = "[Valorant Predictor]";
+const PREFIX = "[Valorant Analyzer]";
+
+const isDevelopment = import.meta.env.DEV;
 
 export const logger = {
   info(message, data = null) {
+    if (!isDevelopment) return;
+
     if (data !== null) {
       console.info(`${PREFIX} ${message}`, data);
       return;
@@ -11,6 +15,8 @@ export const logger = {
   },
 
   debug(message, data = null) {
+    if (!isDevelopment) return;
+
     if (data !== null) {
       console.debug(`${PREFIX} ${message}`, data);
       return;
@@ -20,6 +26,8 @@ export const logger = {
   },
 
   warn(message, data = null) {
+    if (!isDevelopment) return;
+
     if (data !== null) {
       console.warn(`${PREFIX} ${message}`, data);
       return;
@@ -29,6 +37,8 @@ export const logger = {
   },
 
   error(message, error = null) {
+    if (!isDevelopment) return;
+
     if (error !== null) {
       console.error(`${PREFIX} ${message}`, error);
       return;
