@@ -44,7 +44,8 @@ export async function handleGeneralAction() {
     logger.error("General analysis failed.", error);
 
     showError(
-      error.response?.data?.message ||
+      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
+        error.response?.data?.message ||
         error.response?.data?.error ||
         "Gagal melakukan analisis. Silakan coba lagi.",
     );

@@ -43,7 +43,9 @@ export async function handleTeamAction() {
     logger.error("Team prediction failed.", error);
 
     showError(
-      error.response?.data?.message ||
+      error.apiInfo?.message + " Silakan tunggu beberapa saat" ||
+        error.response?.data?.message ||
+        error.response?.data?.error ||
         "Gagal melakukan prediksi. Silakan coba lagi.",
     );
   } finally {
