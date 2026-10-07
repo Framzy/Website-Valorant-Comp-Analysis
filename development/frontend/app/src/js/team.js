@@ -9,6 +9,7 @@ import {
   revealResults,
 } from "./ui.js";
 import { logger } from "./logger.js";
+import $ from "jquery";
 
 export async function handleTeamAction() {
   logger.info("Team prediction requested.");
@@ -165,7 +166,6 @@ function updateTeamGauge(percentage, conclusion) {
   const section = document.getElementById("teamGaugeSection");
   const fill = document.getElementById("teamGaugeFill");
   const status = document.getElementById("teamGaugeStatus");
-  const subText = document.getElementById("teamGaugeSubText");
   const reason = document.getElementById("teamConclusionReason");
 
   if (section) {
@@ -348,38 +348,37 @@ function renderTeamBestComposition(bestComposition) {
 }
 
 function renderTeamPlaystyle(badgeId, descriptionId, playstyle) {
-  const badge = document.getElementById(badgeId);
-  const description = document.getElementById(descriptionId);
+  const $badge = $(`#${badgeId}`);
+  const $description = $(`#${descriptionId}`);
 
   if (!playstyle?.name) {
-    if (badge) {
-      badge.textContent = "—";
-      badge.className =
-        "playstyle-badge team-playstyle-badge playstyle-unclassified";
-    }
-    if (description) description.textContent = "Belum ada informasi playstyle.";
+    $badge
+      .text("—")
+      .attr(
+        "class",
+        "playstyle-badge team-playstyle-badge playstyle-unclassified",
+      );
+    $description.text("Belum ada informasi playstyle.");
     return;
   }
 
   const name = String(playstyle.name).toUpperCase();
   const className = `playstyle-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
-  if (badge) {
-    badge.textContent = name;
-    badge.className = `playstyle-badge team-playstyle-badge ${className}`;
-  }
+  $badge
+    .text(name)
+    .attr("class", `playstyle-badge team-playstyle-badge ${className}`);
 
-  if (description) {
-    description.textContent =
-      playstyle.description || "Tidak ada deskripsi playstyle.";
-  }
+  $description.text(
+    playstyle.description || "Tidak ada deskripsi playstyle yang tersedia.",
+  );
 }
 
 function renderAgentVisuals(containerId, agentNames = []) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
+  const $container = $(`#${containerId}`);
+  if (!$container.length) return;
 
-  container.innerHTML = "";
+  $container.empty();
 
   agentNames.forEach((name) => {
     const agent = agentData.find(
@@ -404,22 +403,23 @@ function renderAgentVisuals(containerId, agentNames = []) {
     label.textContent = capitalize(agent.name);
 
     wrapper.append(image, label);
-    container.appendChild(wrapper);
+    $container.append(wrapper);
   });
 }
 
 function renderTeamInference(inference) {
-  const element = document.getElementById("teamFeatureCount");
-  if (!element) return;
+  const $element = $("#teamFeatureCount");
+  if (!$element) return;
 
-  element.textContent = inference?.feature_count
-    ? `${inference.feature_count} features digunakan model`
-    : "—";
+  $element.text(
+    inference?.feature_count
+      ? `${inference.feature_count} features digunakan model`
+      : "—",
+  );
 }
 
 function setText(id, value) {
-  const element = document.getElementById(id);
-  if (element) element.textContent = value;
+  $(`#${id}`).text(value);
 }
 
 function formatPercent(value) {
