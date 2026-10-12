@@ -19,6 +19,9 @@ import { logger } from "./logger.js";
 
 import $ from "jquery";
 
+let yearsLoaded = false;
+let isLoadingYears = false;
+
 function init() {
   logger.info("Application initialization started.");
 
@@ -54,20 +57,32 @@ function init() {
    ========================================================= */
 
 async function loadAvailableYears() {
+  if (yearsLoaded || isLoadingYears) {
+    return;
+  }
+
+  isLoadingYears = true;
+
   try {
     const years = await getAvailableYears();
 
     logger.info("Available years loaded.", years);
+
     const latestYear = years.at(-1) || years[years.length - 1];
 
     loadDataLastUpdated(latestYear);
 
     populateSelect(document.getElementById("year"), years, "— Pilih Tahun —");
+
+    yearsLoaded = true;
   } catch (error) {
     logger.error("Failed to load available years.", error);
+
     showError(
       error.apiInfo?.message || "Gagal memuat data tahun. Silakan coba lagi.",
     );
+  } finally {
+    isLoadingYears = false;
   }
 }
 
@@ -155,7 +170,7 @@ function initSharedInputEvents() {
   $("#map").on("change", handleMapChange);
   $("#team").on("change", handleTeamChange);
 
-  $("#year").on("click", loadAvailableYears);
+  $("#year").on("click", handleYearClick);
 
   $("#btnAction").on("click", handleAction);
   $("#btnReset").on("click", handleReset);
@@ -172,6 +187,12 @@ function initSharedInputEvents() {
 /* =========================================================
    YEAR
    ========================================================= */
+
+function handleYearClick() {
+  if (!yearsLoaded && !isLoadingYears) {
+    loadAvailableYears();
+  }
+}
 
 async function handleYearChange(event) {
   const year = event.target.value;
