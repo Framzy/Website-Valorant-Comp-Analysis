@@ -952,6 +952,7 @@ main.container {
 
 .last-data-updated {
   width: 100%;
+  max-width: 1100px;
   display: flex;
   flex-direction: column;
   gap: 6px;
