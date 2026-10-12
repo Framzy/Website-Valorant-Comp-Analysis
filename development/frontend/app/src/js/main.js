@@ -155,6 +155,8 @@ function initSharedInputEvents() {
   $("#map").on("change", handleMapChange);
   $("#team").on("change", handleTeamChange);
 
+  $("#year").on("click", loadAvailableYears);
+
   $("#btnAction").on("click", handleAction);
   $("#btnReset").on("click", handleReset);
 
