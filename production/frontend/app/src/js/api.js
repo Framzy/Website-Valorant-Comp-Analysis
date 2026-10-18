@@ -5,7 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 5000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -22,7 +22,8 @@ function getApiErrorInfo(error) {
       return {
         type: "timeout",
         status: null,
-        message: "Request membutuhkan waktu terlalu lama. Silakan coba lagi.",
+        message:
+          "Request membutuhkan waktu sedikit lebih lama. Silakan coba beberapa saat lagi.",
       };
     }
 
