@@ -4,19 +4,12 @@ import "../css/results.css";
 import "../css/responsive.css";
 
 import { state } from "./state.js";
-
 import { initAgents, resetAgents } from "./agents.js";
-
-import { closeError, hideResults, showError } from "./ui.js";
-
+import { closeError, handleErrorRetry, hideResults, showError } from "./ui.js";
 import { getAvailableYears, getAvailableMaps, getTeamTeams } from "./api.js";
-
 import { handleGeneralAction } from "./general.js";
-
 import { handleTeamAction } from "./team.js";
-
 import { logger } from "./logger.js";
-
 import $ from "jquery";
 
 let yearsLoaded = false;
@@ -56,7 +49,7 @@ function init() {
    TEST SHARED OPTIONS API
    ========================================================= */
 
-async function loadAvailableYears() {
+async function loadAvailableYears(isRetry = false) {
   if (yearsLoaded || isLoadingYears) {
     return;
   }
@@ -71,15 +64,19 @@ async function loadAvailableYears() {
     const latestYear = years.at(-1) || years[years.length - 1];
 
     loadDataLastUpdated(latestYear);
-
     populateSelect(document.getElementById("year"), years, "— Pilih Tahun —");
 
     yearsLoaded = true;
+
+    if (isRetry) {
+      closeError();
+    }
   } catch (error) {
     logger.error("Failed to load available years.", error);
 
     showError(
       error.apiInfo?.message || "Gagal memuat data tahun. Silakan coba lagi.",
+      () => loadAvailableYears(true),
     );
   } finally {
     isLoadingYears = false;
@@ -194,7 +191,7 @@ function handleYearClick() {
   }
 }
 
-async function handleYearChange(event) {
+async function handleYearChange(event, isRetry = false) {
   const year = event.target.value;
 
   logger.debug("Year changed.", { year });
@@ -219,10 +216,16 @@ async function handleYearChange(event) {
     });
 
     populateSelect(document.getElementById("map"), maps, "— Pilih Map —");
+
+    if (isRetry) {
+      closeError();
+    }
   } catch (error) {
     logger.error("Failed to load maps.", error);
+
     showError(
       error.apiInfo?.message || "Gagal memuat data map. Silakan coba lagi.",
+      () => handleYearChange({ target: { value: year } }, true),
     );
   }
 }
@@ -231,7 +234,7 @@ async function handleYearChange(event) {
    MAP
    ========================================================= */
 
-async function handleMapChange(event) {
+async function handleMapChange(event, isRetry = false) {
   const map = event.target.value;
   const year = document.getElementById("year")?.value;
 
@@ -260,11 +263,16 @@ async function handleMapChange(event) {
     });
 
     populateSelect(document.getElementById("team"), teams, "— Pilih Tim —");
+
+    if (isRetry) {
+      closeError();
+    }
   } catch (error) {
     logger.error("Failed to load teams.", error);
 
     showError(
       error.apiInfo?.message || "Gagal memuat data tim. Silakan coba lagi.",
+      () => handleMapChange({ target: { value: map } }, true),
     );
   }
 }
@@ -277,6 +285,11 @@ function handleAction() {
   logger.info("Action button clicked.", {
     mode: state.currentMode,
   });
+
+  if (!yearsLoaded && !isLoadingYears) {
+    loadAvailableYears();
+    return;
+  }
 
   if (state.currentMode === "general") {
     handleGeneralAction();
@@ -396,12 +409,15 @@ function resetSummaries() {
 
 function initErrorEvents() {
   const closeButton = document.getElementById("errorCloseBtn");
-
-  logger.debug("Error close button.", {
-    found: Boolean(closeButton),
-  });
+  const retryButton = document.getElementById("errorRetryBtn");
 
   closeButton?.addEventListener("click", closeError);
+  retryButton?.addEventListener("click", handleErrorRetry);
+
+  logger.debug("Error events initialized.", {
+    closeButtonFound: Boolean(closeButton),
+    retryButtonFound: Boolean(retryButton),
+  });
 }
 
 /* =========================================================

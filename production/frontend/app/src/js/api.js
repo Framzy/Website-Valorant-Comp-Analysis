@@ -5,7 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 5000,
+  timeout: 15000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -23,15 +23,14 @@ function getApiErrorInfo(error) {
         type: "timeout",
         status: null,
         message:
-          "Request membutuhkan waktu sedikit lebih lama. Silakan coba beberapa saat lagi.",
+          "Request membutuhkan waktu sedikit lebih lama, silakan coba lagi.",
       };
     }
 
     return {
       type: "network",
       status: null,
-      message:
-        "Tidak dapat terhubung ke server. Silakan tunggu beberapa saat dan coba lagi.",
+      message: "Tidak dapat terhubung ke server, silakan coba lagi.",
     };
   }
 
@@ -42,7 +41,7 @@ function getApiErrorInfo(error) {
       return {
         type: "http",
         status,
-        message: "Permintaan tidak valid. Silakan periksa input Anda.",
+        message: "Permintaan tidak valid, silakan periksa input Anda.",
       };
 
     case 404:
@@ -50,28 +49,28 @@ function getApiErrorInfo(error) {
         type: "http",
         status,
         message:
-          "Data atau endpoint tidak ditemukan. Silakan periksa input Anda.",
+          "Data atau endpoint tidak ditemukan, silakan periksa input Anda.",
       };
 
     case 408:
       return {
         type: "http",
         status,
-        message: "Request membutuhkan waktu terlalu lama. Silakan coba lagi.",
+        message: "Request membutuhkan waktu terlalu lama, silakan coba lagi.",
       };
 
     case 429:
       return {
         type: "http",
         status,
-        message: "Terlalu banyak permintaan. Silakan coba lagi nanti.",
+        message: "Terlalu banyak permintaan, silakan coba lagi nanti.",
       };
 
     case 500:
       return {
         type: "http",
         status,
-        message: "Terjadi kesalahan pada server. Silakan coba lagi nanti.",
+        message: "Terjadi kesalahan pada server, silakan coba lagi nanti.",
       };
 
     case 502:
@@ -80,7 +79,7 @@ function getApiErrorInfo(error) {
       return {
         type: "http",
         status,
-        message: "Server sedang tidak tersedia. Silakan coba lagi nanti.",
+        message: "Server sedang tidak tersedia, silakan coba lagi nanti.",
       };
 
     default:

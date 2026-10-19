@@ -1,5 +1,7 @@
 import $ from "jquery";
 
+let retryAction = null;
+let isRetrying = false;
 export function showLoading(message = "Memproses data...") {
   const overlay = document.getElementById("overlay");
   const loading = document.getElementById("loading");
@@ -31,18 +33,34 @@ export function hideLoading() {
   }
 }
 
-export function showError(message) {
+export function showError(message, onRetry = null) {
   const messageElement = document.getElementById("errorMessage");
   const overlay = document.getElementById("errorOverlay");
   const popup = document.getElementById("errorPopup");
+  const retryButton = document.getElementById("errorRetryBtn");
+
+  const canRetry = typeof onRetry === "function";
+
+  retryAction = onRetry;
+
+  popup?.classList.toggle("has-retry", canRetry);
+  popup?.classList.toggle("is-info", !canRetry);
 
   if (messageElement) {
     messageElement.textContent = message;
   }
 
-  if (overlay) {
-    overlay.style.display = "block";
+  if (retryButton) {
+    retryButton.style.display = canRetry ? "inline-flex" : "none";
+
+    if (!isRetrying) {
+      retryButton.disabled = false;
+      retryButton.classList.remove("is-loading");
+      retryButton.textContent = "Coba Lagi";
+    }
   }
+
+  if (overlay) overlay.style.display = "block";
 
   if (popup) {
     popup.style.display = "flex";
@@ -52,11 +70,54 @@ export function showError(message) {
     });
   }
 }
+const MIN_RETRY_LOADING_TIME = 2000;
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function handleErrorRetry() {
+  if (!retryAction || isRetrying) return;
+
+  const retryButton = document.getElementById("errorRetryBtn");
+  const errorRetryMessage = document.getElementById("errorMessage");
+  const startedAt = Date.now();
+
+  isRetrying = true;
+
+  if (retryButton) {
+    retryButton.disabled = true;
+    retryButton.classList.add("is-loading");
+    retryButton.textContent = "Memuat...";
+  }
+
+  try {
+    await retryAction();
+  } finally {
+    const elapsed = Date.now() - startedAt;
+    const remaining = MIN_RETRY_LOADING_TIME - elapsed;
+
+    if (remaining > 0) {
+      await wait(remaining);
+    }
+
+    isRetrying = false;
+
+    if (retryButton) {
+      retryButton.classList.remove("is-loading");
+
+      if (retryAction) {
+        retryButton.disabled = false;
+        retryButton.textContent = "Coba Lagi";
+        errorRetryMessage.textContent +=
+          " Kesalahan Masih belum teratasi, silakan tunggu atau coba lagi.";
+      }
+    }
+  }
+}
 
 export function closeError() {
   const overlay = document.getElementById("errorOverlay");
   const popup = document.getElementById("errorPopup");
-
+  retryAction = null;
   if (!popup) {
     return;
   }
