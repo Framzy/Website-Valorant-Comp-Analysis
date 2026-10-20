@@ -5,7 +5,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 DATA_DIR = BASE_DIR / "data"
-MODEL_DIR = BASE_DIR / "models"
+ARTIFACT_DIR = BASE_DIR / "ml" / "artifacts"
 
 # DATASET
 
@@ -17,8 +17,8 @@ TEAM_DATASET_PATH = (
     DATA_DIR / "valorant_dataset_team_v2.csv"
 )
 
-# MODEL
+# ARTIFACT
 
-MODEL_TEAM_DIR = (
-    MODEL_DIR / "team_prediction_v2"
+ARTIFACT_TEAM_DIR = (
+    ARTIFACT_DIR / "team"
 )

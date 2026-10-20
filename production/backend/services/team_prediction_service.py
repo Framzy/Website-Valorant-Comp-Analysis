@@ -29,7 +29,7 @@ from typing import Iterable
 
 from backend.config import (
     TEAM_DATASET_PATH,
-    MODEL_TEAM_DIR,
+    ARTIFACT_TEAM_DIR,
 )
 
 from backend.constants import (
@@ -128,10 +128,10 @@ class TeamPredictionService:
     def __init__(
         self,
         dataset_path=TEAM_DATASET_PATH,
-        model_path=MODEL_TEAM_DIR / "team_model_v2.joblib",
-        encoders_path=MODEL_TEAM_DIR / "encoders.joblib",
-        feature_names_path=MODEL_TEAM_DIR / "feature_names.joblib",
-        metadata_path=MODEL_TEAM_DIR / "metadata.json",
+        model_path=ARTIFACT_TEAM_DIR / "team_model_v2.joblib",
+        encoders_path=ARTIFACT_TEAM_DIR / "encoders.joblib",
+        feature_names_path=ARTIFACT_TEAM_DIR / "feature_names.joblib",
+        metadata_path=ARTIFACT_TEAM_DIR / "metadata.json",
     ):
         # Load once when the service is created.
         self.dataset_path = Path(dataset_path)
