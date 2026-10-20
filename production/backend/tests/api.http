@@ -409,7 +409,7 @@ Accept: application/json
 {
   "team": "FNATIC",
   "map": "Abyss",
-  "year": 2024,
+  "year": 2025,
   "agents": [
     "cypher",
     "jett",
